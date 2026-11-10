@@ -105,3 +105,8 @@ P: Siguiente pregunta...
 - [David Calzado Olmo](https://github.com/DavidCOAlmagro) lo pulió y lo amplió,
   con ayuda de [Claude](https://claude.ai) (Anthropic).
 
+## Licencia
+
+[MIT](LICENSE): puedes usar, copiar y modificar el código libremente, siempre que
+mantengas el aviso de copyright.
+
