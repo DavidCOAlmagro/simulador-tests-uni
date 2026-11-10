@@ -1,0 +1,1086 @@
+% Banco de preguntas del laboratorio de Sistemas Distribuidos (primer parcial).
+% Basado en: el manual "Computación distribuida con ZeroC Ice" (ice-manual.pdf), el
+% proyecto Spotifice (spotifice_v0: código, configuración y pruebas) y los enunciados
+% de los ejercicios 1 (spotifice_v1.ice) y 2 (spotifice_v2.ice).
+% Quitadas las preguntas de IceGrid (sesión 6) y los detalles de IceStorm, que no entran
+% en el primer parcial de laboratorio. Se mantienen AMI/AMD, factorías y default servant,
+% que se ven en el Tema 3 de teoría, y lo básico de IceStorm, que se ve en el Tema 4.
+% Las opciones se han reescrito para que la correcta no sea siempre la más larga: los
+% detalles que antes iban en la opción correcta están ahora en la explicación (E:).
+% Los comportamientos de Ice citados se han comprobado con Ice 3.7 (Python).
+
+@titulo: SSDD Lab - Ice y Spotifice
+@tiempo: 30
+@penalizacion: 3
+@preguntas: 15
+
+% ======================================================================
+% ICE - Conceptos básicos
+% ======================================================================
+---
+T: Ice - Conceptos básicos
+P: En Ice, ¿qué es el SIRVIENTE (servant)?
+a) El objeto local del cliente que representa al objeto remoto y le envía las invocaciones.
+b) La clase del servidor, escrita por el programador, que implementa la interfaz.
+c) El componente del servidor que asocia cada identidad con el objeto que debe atenderla.
+d) El servicio que traduce nombres simbólicos de adaptadores a sus endpoints.
+R: b
+E: Un objeto Ice es una entidad conceptual (con tipo e identidad); el sirviente es el código que le da cuerpo en el servidor. a) es el proxy, c) el adaptador de objetos y d) el Locator.
+---
+P: ¿Qué es un PROXY en Ice?
+a) La clase del servidor que implementa la lógica de negocio de la interfaz.
+b) Un servidor intermedio que reenvía las peticiones HTTP hacia el servidor real.
+c) Un objeto local del cliente que representa al objeto remoto y le envía las invocaciones.
+d) El componente que escucha en un puerto y reparte las peticiones entre los objetos.
+R: c
+E: Tiene la misma interfaz que el objeto remoto, serializa cada invocación y la envía. Es la materialización local de una referencia remota (identidad + endpoints o adaptador): una especie de «puntero remoto». a) es el sirviente y d) el adaptador de objetos.
+---
+P: ¿Qué hace el ADAPTADOR DE OBJETOS en un servidor Ice?
+a) Traduce el fichero Slice al lenguaje de programación del servidor al arrancar.
+b) Escucha en sus endpoints y entrega cada petición al sirviente de esa identidad.
+c) Serializa los argumentos de cada invocación antes de enviarlos por la red.
+d) Busca en la red los servidores disponibles y guarda sus direcciones en caché.
+R: b
+E: Relaciona identidades con sirvientes. Hay dos niveles de despachado: primero el adaptador localiza el sirviente a partir de la identidad que lleva la petición, y después el sirviente localiza el método a partir del nombre de la operación.
+---
+P: ¿Cuáles son los dos niveles de despachado de una invocación en el servidor Ice?
+a) El adaptador elige el sirviente por la identidad; el sirviente, el método por la operación.
+b) El cliente elige el servidor por su endpoint; el servidor elige el hilo que atiende la petición.
+c) El Locator elige el adaptador por su identificador; el adaptador elige el puerto de escucha.
+d) El sistema operativo elige el proceso por el puerto; el proceso elige el sirviente al azar.
+R: a
+E: Por eso un mismo adaptador puede alojar muchos objetos (identidades distintas) y cada sirviente puede ofrecer varias operaciones.
+---
+P: ¿Qué representa el objeto «communicator» (ic) que devuelve Ice.initialize()?
+a) El sirviente principal del servidor, que atiende todas las peticiones que llegan.
+b) El núcleo de Ice en el programa: con él se crean adaptadores y proxies.
+c) Una conexión TCP abierta con el servidor que se indica en la configuración.
+d) Un hilo de ejecución dedicado a recibir mensajes de la red en segundo plano.
+R: b
+E: Es el ORB (broker de objetos) de Ice; también da acceso a las propiedades. En Spotifice se crea con «with Ice.initialize(sys.argv) as communicator:», que procesa argumentos como --Ice.Config y destruye el comunicador al salir del with.
+---
+P: ¿Qué es Slice?
+a) El protocolo binario con el que Ice transporta las invocaciones por la red.
+b) La herramienta de Ice para desplegar servidores en varios nodos a la vez.
+c) El lenguaje declarativo de Ice para especificar interfaces y tipos.
+d) El servicio de eventos de Ice que propaga invocaciones a varios suscriptores.
+R: c
+E: Specification Language for Ice: solo declara tipos y operaciones, sin lógica. Permite módulos, interfaces (con herencia, incluso múltiple), clases, estructuras, secuencias, diccionarios, enumerados y excepciones. a) es IceP, b) IceGrid y d) IceStorm.
+---
+P: ¿Qué son los «mappings» de Slice?
+a) Las reglas para traducir cada tipo de Slice a cada lenguaje de programación.
+b) Las tablas en las que el adaptador de objetos asocia identidades con sirvientes.
+c) Los ficheros de configuración en los que se indican endpoints y propiedades.
+d) La correspondencia que guarda el Locator entre adaptadores y direcciones IP.
+R: a
+E: Por ejemplo, una secuencia es un vector de la STL en C++ y un array en Java. Los compiladores (slice2cpp, slice2java, slice2py…) generan código distinto para cada lenguaje, pero compatible entre sí en ejecución.
+---
+P: En Python, ¿cómo se suele compilar la interfaz Slice en los ejemplos y en Spotifice?
+a) Con slice2cpp antes de ejecutar, y después se importa la librería generada.
+b) Al vuelo, con Ice.loadSlice(), que genera el módulo en memoria.
+c) No hace falta: el intérprete de Python entiende los ficheros .ice directamente.
+d) Instalando el módulo con pip install a partir del nombre que aparece en el .ice.
+R: b
+E: Después se hace import del módulo. Spotifice hace Ice.loadSlice(f'-I{Ice.getSliceDir()} spotifice_v0.ice') e import Spotifice. También existe slice2py (lo usa el ejemplo counter-by-id desde su Makefile).
+---
+P: ¿Por qué Spotifice llama a Ice.loadSlice con el argumento -I{Ice.getSliceDir()}?
+a) Para activar el modo de depuración del compilador y ver los avisos del Slice.
+b) Para que encuentre Ice/Identity.ice, que spotifice_v0.ice incluye.
+c) Para indicar en qué puerto debe escuchar el adaptador del servidor.
+d) Para que el módulo generado se guarde en el directorio de Ice del sistema.
+R: b
+E: spotifice_v0.ice hace #include <Ice/Identity.ice> para usar Ice::Identity, y -I añade la carpeta de los Slice de Ice a la ruta de búsqueda. Sin ella el #include fallaría; y si quitas el #include, el parser da «`Ice::Identity' is not defined» (comprobado).
+---
+P: ¿Para qué sirve la línea [["underscore"]] al principio de spotifice_v0.ice?
+a) Para que los métodos cuyo nombre empieza por guion bajo sean privados.
+b) Para permitir guiones bajos en los nombres, como load_track.
+c) Para que el compilador genere el código Python en estilo snake_case.
+d) Para importar el módulo Ice y poder usar sus tipos, como Ice::Identity.
+R: b
+E: Slice no admite por defecto identificadores con guion bajo. Sin esa metadirectiva global, rechaza el fichero: «illegal underscore in identifier `load_track'» (comprobado).
+---
+P: ¿Qué cuatro operaciones de introspección hereda implícitamente toda interfaz Slice de Ice::Object?
+a) ice_ping(), ice_id(), ice_ids() e ice_isA()
+b) open(), close(), read() y write()
+c) create(), destroy(), get() y set()
+d) bind(), unbind(), play() y stop()
+R: a
+E: Por ejemplo, la prueba test_id comprueba que render.ice_id() devuelve '::Spotifice::MediaRender'. ice_ping() se usa para ver si un objeto existe y es alcanzable.
+---
+P: ¿Qué devuelve ice_ids() sobre el proxy del MediaProvider de Spotifice (v0)?
+a) ['::Spotifice::MediaProvider']
+b) ['::Ice::Object', '::Spotifice::MediaProvider', '::Spotifice::MusicLibrary', '::Spotifice::StreamManager']
+c) ['::Spotifice::MediaProvider', '::Spotifice::MusicLibrary', '::Spotifice::StreamManager']
+d) ['::Ice::Object', '::Spotifice::MediaProvider']
+R: b
+E: Todos los tipos que implementa el objeto, incluidas las interfaces de las que hereda (MediaProvider extends MusicLibrary, StreamManager) e Ice::Object, del que heredan todas (comprobado).
+---
+P: En el sirviente Python, ¿qué es el parámetro «current» que reciben los métodos (por ejemplo def play(self, current=None))?
+a) El valor de retorno que el método debe rellenar antes de terminar.
+b) Información de la invocación en curso: identidad, adaptador, operación…
+c) El proxy del cliente que ha hecho la invocación, para poder responderle.
+d) El hilo del pool del servidor que está ejecutando la invocación.
+R: b
+E: La aporta el runtime: current.id (identidad del objeto invocado), current.adapter, current.operation, current.con… MediaRenderI.play() usa current.id como clave del stream en el provider, y la factoría del manual usa current.adapter para registrar sirvientes nuevos.
+---
+P: ¿Qué identifica de forma única a un objeto dentro de un servidor Ice?
+a) El nombre de la clase Python de su sirviente.
+b) Su identidad (Ice::Identity, con name y category).
+c) El puerto en el que escucha su adaptador.
+d) El nombre de la interfaz Slice que implementa.
+R: b
+E: ic.stringToIdentity("mediaProvider0") crea la identidad (category vacía). Con «cat/nombre» se obtiene category='cat' y name='nombre' (comprobado). Se recomienda usar UUID para garantizar unicidad.
+---
+P: Un mismo sirviente se registra en el adaptador con varias identidades distintas. ¿Es posible?
+a) No: el adaptador rechaza registrar dos veces la misma instancia de sirviente.
+b) Sí; y sabe a qué objeto va cada invocación mirando current.id.
+c) Solo si cada identidad corresponde a una interfaz Slice distinta.
+d) Solo si se despliega con IceGrid, que replica el sirviente en varios nodos.
+R: b
+E: Un sirviente puede responder por varios objetos: es la base del patrón default servant. A la inversa también se puede: un mismo objeto puede estar respaldado por sirvientes en varios servidores (replicación).
+---
+P: Ice tiene su propio protocolo de aplicación. ¿Cuál es y sobre qué puede transportarse?
+a) HTTP, siempre sobre TCP, como los servicios web.
+b) IceP, sobre TCP, UDP o TLS, entre otros.
+c) RMI-IIOP, el de CORBA, solo sobre TCP.
+d) AMQP, sobre TCP o sobre WebSocket.
+R: b
+E: IceP (Ice Protocol): Ice serializa cada invocación con su propio protocolo binario, independiente del transporte.
+
+% ======================================================================
+% ICE - Servidor, proxies y configuración
+% ======================================================================
+---
+T: Ice - Proxies y configuración
+P: ¿Qué devuelve adapter.add(servant, identity)?
+a) Nada; el objeto se registra y se consulta después con find().
+b) El proxy del objeto recién registrado.
+c) El mismo sirviente, ya asociado a la identidad.
+d) True si la identidad no estaba ya registrada.
+R: b
+E: Los servidores de Spotifice lo imprimen con logger.info(f"MediaProvider: {proxy}"). También existe addWithUUID(servant), que genera la identidad automáticamente.
+---
+P: ¿Qué ocurre si un servidor crea el adaptador «Spotifice.MediaRenderAdapter» sin ninguna configuración de endpoints?
+a) El adaptador escucha en un puerto aleatorio de todas las interfaces de red.
+b) Ice lanza InitializationException: el adaptador «requires configuration».
+c) Ice usa el puerto 10001, que es el que tiene asignado el render por defecto.
+d) Funciona, pero solo acepta conexiones desde localhost hasta que se configure.
+R: b
+E: createObjectAdapter(nombre) busca la propiedad <nombre>.Endpoints. Por eso hay que lanzar los componentes con --Ice.Config=render.config (comprobado).
+---
+P: En Spotifice, el render crea su adaptador con ic.createObjectAdapter('Spotifice.MediaRenderAdapter'). ¿Qué propiedad fija en qué puerto escucha?
+a) Spotifice.MediaRender.Endpoints
+b) Spotifice.MediaRenderAdapter.Endpoints
+c) Ice.Default.Endpoints
+d) MediaRenderAdapter.Port
+R: b
+E: Cada adaptador usa su propio nombre como prefijo de sus propiedades: <NombreAdaptador>.Endpoints. En render.config: Spotifice.MediaRenderAdapter.Endpoints = tcp -p 10001.
+---
+P: ¿Cómo se indica a un programa Ice qué fichero de configuración usar?
+a) Con la opción --Ice.Config=fichero al ejecutarlo.
+b) Con la variable de entorno CONFIG, que Ice lee al arrancar el programa.
+c) Poniendo el fichero en /etc/ice, donde Ice busca la configuración por defecto.
+d) Con import config al principio del programa, antes de llamar a Ice.initialize().
+R: a
+E: Ice.initialize(sys.argv) procesa ese argumento. Es lo que hacen el Makefile (run-render, run-provider, run-control) y demo.sh: ./media_render.py --Ice.Config=render.config.
+---
+P: En provider.config, ¿qué indican las propiedades Spotifice.MediaProvider.Content = media y Spotifice.MediaProvider.Identity = mediaProvider0?
+a) El directorio de los .mp3 y la identidad con la que se registra el objeto.
+b) El directorio donde se guardan los logs y el nombre del adaptador de objetos.
+c) El nombre del módulo Slice que se carga y la identidad del cliente autorizado.
+d) La carpeta de las playlists y el nombre con el que el provider se apunta en el Locator.
+R: a
+E: main() las lee con properties.getPropertyWithDefault(...). Son propiedades propias de la aplicación, no de Ice; los nombres no deben cambiarse porque las pruebas automáticas los usan.
+---
+P: Si provider.config no define Spotifice.MediaProvider.Identity, ¿qué identidad usa el MediaProvider?
+a) 'mediaProvider0', que es la identidad por defecto del código.
+b) Una identidad aleatoria, str(uuid.uuid1())
+c) Ninguna: el servidor no arranca y muestra un error de configuración.
+d) El nombre del adaptador, 'Spotifice.MediaProviderAdapter'.
+R: b
+E: main() hace getPropertyWithDefault('Spotifice.MediaProvider.Identity', str(uuid.uuid1())). El control no podría encontrarlo con su proxy fijo mediaProvider0.
+---
+P: ¿Cuál es el formato del proxy textual (stringified proxy) en Ice?
+a) protocolo://host:puerto/identidad, igual que una URL.
+b) identidad opciones:endpoints
+c) host:puerto/identidad, sin opciones.
+d) identidad@IP:puerto
+R: b
+E: Cada endpoint es «protocolo -h host -p puerto». Ejemplo: «printer1 -t:tcp -h 192.168.0.12 -p 7070». Se convierte con stringToProxy() / proxyToString(). Varios endpoints se separan con «:».
+---
+P: El servidor imprime «mediaProvider0 -t -e 1.1:tcp -h 127.0.0.1 -p 10000 -t 60000». ¿Qué significan los dos «-t»?
+a) Los dos son timeouts: el primero de conexión y el segundo de invocación.
+b) El primero es el modo twoway; el segundo, el timeout del endpoint en ms.
+c) Los dos indican que el transporte es TCP, uno para cada sentido.
+d) El primero indica TCP y el segundo, que el modo de invocación es twoway.
+R: b
+E: El primero va tras la identidad; el segundo, dentro del endpoint. «-e 1.1» es la versión de la codificación de los mensajes.
+---
+P: control.config contiene «Spotifice.MediaRender.Proxy=mediaRender0:tcp -p 10001». ¿Cómo obtiene media_control.py el proxy?
+a) Con ic.stringToProxy('Spotifice.MediaRender.Proxy'), pasándole el nombre de la propiedad.
+b) Con ic.propertyToProxy(), y después hace checkedCast a MediaRenderPrx.
+c) Abriendo control.config a mano y buscando la línea que empieza por el nombre.
+d) Preguntando al Locator por la identidad mediaRender0 cada vez que la necesita.
+R: b
+E: propertyToProxy lee la propiedad y crea el proxy. get_proxy() reintenta ice_ping() hasta 5 veces (por si el servidor aún no ha arrancado) y luego hace checkedCast. Si la propiedad no existe, propertyToProxy devuelve None. a) crearía un proxy con identidad «Spotifice.MediaRender.Proxy», que no existe.
+---
+P: Un endpoint configurado como «tcp -p 10000» (sin -h), ¿en qué interfaces escucha el adaptador?
+a) Solo en localhost (127.0.0.1).
+b) En todas las interfaces de red del computador.
+c) En ninguna: falta la IP y el adaptador no arranca.
+d) Solo en la primera interfaz que encuentra Ice.
+R: b
+E: Al no fijar IP escucha en todas, y el proxy que imprime incluye un endpoint por cada interfaz. Si tampoco se fija el puerto (solo «tcp»), Ice elige uno libre automáticamente. Lo que sí es obligatorio es el protocolo.
+---
+P: Si en la configuración de un adaptador se pone solo «tcp» (sin puerto), ¿qué ocurre?
+a) Error al arrancar: en un endpoint TCP el puerto es obligatorio.
+b) Ice elige automáticamente un puerto libre.
+c) Usa el puerto 4061, que es el puerto por defecto de Ice.
+d) Usa el puerto 80, el de HTTP, como hacen los servicios web.
+R: b
+E: Ejercicio E 1.09 del manual: por eso se pueden arrancar dos servidores en la misma máquina. Con un puerto fijo, el segundo falla porque el puerto ya está en uso (E 1.07).
+---
+P: ¿Para qué sirve checkedCast() sobre un proxy?
+a) Para pasar de un proxy genérico al tipo concreto, preguntando al servidor si es de ese tipo.
+b) Para comprobar que la conexión con el servidor está cifrada antes de invocar.
+c) Para convertir el proxy a su representación de texto y poder imprimirlo.
+d) Para cambiar el modo de invocación del proxy de twoway a oneway.
+R: a
+E: Convierte un Ice.ObjectPrx al tipo concreto comprobándolo con ice_isA. Implica una invocación remota (es reflexión remota). Si el objeto no implementa la interfaz, devuelve None; si la identidad no existe, el servidor responde ObjectNotExistException.
+---
+P: Haces Spotifice.MediaRenderPrx.checkedCast(proxy) sobre un proxy que apunta al MediaProvider. ¿Qué obtienes?
+a) Un MediaRenderPrx que fallará al invocar.
+b) None
+c) ObjectNotExistException
+d) El mismo proxy sin cambios.
+R: b
+E: El objeto existe pero no implementa ::Spotifice::MediaRender, así que ice_isA() devuelve falso y checkedCast devuelve None (comprobado). Por eso media_control.py lanza RuntimeError si el resultado es None.
+---
+P: Haces checkedCast sobre un proxy cuya identidad no corresponde a ningún objeto del servidor (el servidor sí existe). ¿Qué ocurre?
+a) Devuelve None.
+b) Se lanza ObjectNotExistException.
+c) Se lanza ConnectionRefusedException.
+d) Devuelve un proxy válido.
+R: b
+E: El servidor responde que no hay objeto con esa identidad (comprobado). Si no hubiera ningún servidor escuchando en ese puerto, sería ConnectionRefusedException.
+---
+P: ¿Qué diferencia hay entre uncheckedCast() y checkedCast()?
+a) Ninguna: los dos preguntan al servidor, pero uncheckedCast no lanza excepciones.
+b) uncheckedCast no pregunta al servidor: si el tipo no es el correcto, falla al invocar.
+c) uncheckedCast es más lento, porque además comprueba la identidad del objeto.
+d) uncheckedCast solo funciona con proxies oneway y checkedCast con twoway.
+R: b
+E: uncheckedCast construye el proxy tipado sin contactar con nadie. Comprobado: uncheckedCast de un MediaProvider a MediaRenderPrx y llamar a play() da OperationNotExistException. Es obligatorio con el publicador de IceStorm (que no implementa ninguna interfaz concreta) y con proxies oneway.
+---
+P: ¿Qué hace render.bind_media_provider() con el proxy recibido antes de guardarlo?
+a) Nada: lo guarda directamente en self.provider para usarlo después.
+b) Le hace checkedCast a MediaRenderPrx para comprobar su tipo.
+c) Hace ice_ping() con un timeout corto para comprobar que responde.
+d) Lo registra en su propio adaptador para recibir sus notificaciones.
+R: c
+E: Le aplica ice_timeout(500) y hace ice_ping(); si recibe ConnectionRefusedException lanza BadReference («MediaProvider not reachable: ...»). ice_timeout() devuelve un proxy nuevo (los proxies son inmutables); el que se guarda en self.provider es el original.
+---
+P: Los proxies de Ice son inmutables. ¿Qué devuelve p.ice_oneway()?
+a) Nada; cambia el modo de p a oneway.
+b) Un proxy nuevo igual que p, pero oneway.
+c) True si el objeto admite invocaciones oneway.
+d) La conexión que usará p para enviar en oneway.
+R: b
+E: En su texto aparece «-o» en lugar de «-t». Lo mismo con ice_datagram() («-d»), ice_timeout(ms), etc.: cada uno devuelve una copia modificada del proxy (comprobado).
+---
+P: ¿Pueden pasarse proxies como argumentos de operaciones Slice?
+a) No: en Slice los parámetros solo pueden ser tipos básicos y estructuras.
+b) Sí: en Slice se escriben con asterisco, como MediaProvider*.
+c) Solo convertidos antes a texto con proxyToString(), como un string.
+d) Solo en C++, porque el mapping de Python no admite proxies como parámetro.
+R: b
+E: Son valores de pleno derecho: bind_media_provider(MediaProvider* media_provider). El control le pasa al render la referencia del provider, y el render lo invoca después directamente. Los objetos remotos se pasan por referencia; el resto de tipos, por valor.
+---
+P: ¿Cómo se pasan los parámetros en una invocación Ice?
+a) Todo por referencia: el servidor accede a los datos del cliente cuando los necesita.
+b) Los proxies por referencia; números, cadenas, estructuras, clases… por valor.
+c) Todo por valor, incluidos los objetos remotos, que se copian al servidor.
+d) Depende del lenguaje: por referencia en C++ y Java, y por valor en Python.
+R: b
+E: Con un proxy viaja la referencia y las invocaciones llegan al objeto original; del resto (números, cadenas, estructuras, secuencias, diccionarios e instancias de clases) se serializa una copia. Por ejemplo, TrackInfo (una class Slice) viaja como copia, mientras que MediaProvider* viaja como referencia.
+---
+P: ¿Qué es lo que debe saber el cliente para obtener su PRIMERA referencia a un objeto con un proxy directo?
+a) Nada: Ice descubre los objetos de la red local automáticamente.
+b) El texto del proxy (identidad y endpoints), obtenido por cualquier medio.
+c) La dirección MAC del servidor y el nombre de la interfaz Slice.
+d) El nombre de la clase del sirviente y el del adaptador que lo aloja.
+R: b
+E: Por fichero, línea de comandos, configuración... En el hola mundo se pasa por línea de comandos; en Spotifice está en control.config. Con proxies indirectos basta un nombre y el Locator.
+
+% ======================================================================
+% ICE - Modos de invocación, idempotent, concurrencia
+% ======================================================================
+---
+T: Ice - Invocación e idempotencia
+P: ¿Qué modo de invocación por defecto tiene un proxy Ice y qué semántica ofrece?
+a) oneway, maybe
+b) twoway, at-most-once
+c) datagram, at-least-once
+d) twoway, exactly-once
+R: b
+E: twoway (-t): petición y respuesta sobre TCP; es el único modo en que el cliente recibe resultado o excepción. Semántica at-most-once.
+---
+P: ¿Qué intercambio y qué semántica tienen los modos oneway (-o) y datagram (-d)?
+a) Ambos solo petición y semántica maybe: oneway sobre TCP y datagram sobre UDP.
+b) oneway: petición y respuesta sobre TCP; datagram: solo petición sobre UDP, maybe.
+c) Ambos petición y respuesta, at-most-once, porque reutilizan la conexión.
+d) Ambos solo petición y semántica maybe: oneway sobre UDP y datagram sobre TCP.
+R: a
+E: Entregan la petición al transporte y devuelven el control sin esperar. datagram, al ir sobre UDP, además puede perder o desordenar mensajes, pero permite usar direcciones multicast.
+---
+P: Invocas get_all_tracks() (que devuelve TrackInfoSeq) sobre un proxy oneway del provider. ¿Qué ocurre?
+a) Devuelve la lista normalmente, porque el modo solo afecta al envío.
+b) Se lanza TwowayOnlyException en el cliente, antes de enviar nada.
+c) Se envía la petición y la llamada devuelve None sin esperar respuesta.
+d) El servidor recibe la petición y responde con una excepción remota.
+R: b
+E: En oneway o datagram solo se pueden invocar operaciones sin valor de retorno ni excepciones declaradas. Comprobado: TwowayOnlyException, lanzada localmente.
+---
+P: ¿Qué significa marcar una operación Slice como idempotent?
+a) Que no puede lanzar excepciones de usuario, así que no lleva cláusula throws.
+b) Que repetirla no cambia el estado, así que Ice puede reintentarla si falla.
+c) Que el runtime la ejecuta de forma asíncrona y devuelve un future.
+d) Que el adaptador no permite que dos clientes la invoquen a la vez.
+R: b
+E: Ejecutarla varias veces deja el mismo estado que una vez. Si una invocación twoway falla, Ice la reintenta automáticamente cuando sabe con certeza que no llegó a enviarse; si es idempotent, también cuando no puede saberlo.
+---
+P: En Spotifice, StreamManager.get_chunk() NO está marcada como idempotent. ¿Por qué?
+a) Porque devuelve bytes, y las operaciones con resultado binario no pueden serlo.
+b) Porque cada llamada avanza la lectura: repetirla saltaría un trozo de audio.
+c) Porque declara excepciones, y una operación con throws no puede ser idempotent.
+d) Por un olvido del enunciado; debería serlo, igual que open_stream.
+R: b
+E: Si el runtime la reintentara sin saber si se ejecutó, el render podría perder datos. open_stream y close_stream sí son idempotentes: abrir dos veces el mismo stream o cerrarlo dos veces deja el mismo estado.
+---
+P: ¿Por qué PlaybackController.play() no es idempotent y stop() sí?
+a) Porque play() abre una conexión nueva con el provider y stop() no.
+b) Porque play() repetida da error, y parar algo ya parado no cambia nada.
+c) Porque play() devuelve un valor y stop() es void.
+d) Porque stop() no tiene parámetros y play() recibe la pista.
+R: b
+E: Una segunda llamada a play() no deja el mismo estado: lanza PlayerError «Already playing». La prueba test_stop_is_idempotent invoca stop() dos veces seguidas sin error.
+---
+P: En el ejemplo Counter del manual, get() es idempotent y increment() no. ¿Por qué?
+a) Porque get() devuelve un long, y las operaciones que devuelven valor son idempotentes.
+b) Porque get() no cambia el contador; repetir increment() sumaría dos veces.
+c) Porque increment() tarda más y el runtime no puede esperar a reintentarla.
+d) Es al revés: increment() es idempotent porque siempre suma la misma cantidad.
+R: b
+E: get() se puede reintentar sin riesgo; cada increment() que se ejecuta cambia el resultado del siguiente.
+---
+P: ¿Cuál es el tamaño por defecto del pool de hilos del servidor en Ice (Ice.ThreadPool.Server.Size) y qué implica?
+a) 4: el adaptador puede atender hasta cuatro peticiones a la vez.
+b) 1: el adaptador atiende las peticiones de una en una.
+c) Ilimitado: crea un hilo nuevo por cada petición que llega.
+d) Uno por cliente conectado, que se crea al abrir la conexión.
+R: b
+E: Así un método no se ejecuta dos veces a la vez sobre el mismo sirviente. Si se aumenta (por ejemplo a 4), dos increment() sobre el mismo contador pueden solaparse y self.value += 1 deja de ser segura: habría que protegerla con un cerrojo (ejercicio E 1.14).
+---
+P: Un contador por clave (un objeto que recibe el nombre del contador en cada operación) frente a un contador por identidad (un objeto Counter por contador). ¿Qué ventaja tiene el segundo?
+a) Ninguna: los dos se comportan igual y el segundo solo cambia el nombre.
+b) La identidad distingue cada contador, sin argumento extra en cada operación.
+c) Ocupa menos memoria, porque todos los contadores comparten el mismo valor.
+d) Permite registrar los contadores en el Locator sin configurar el adaptador.
+R: b
+E: Aprovecha el modelo de objetos. counter1 y counter2 comparten servidor, adaptador e interfaz, pero llevan cuentas independientes porque son objetos distintos (dos instancias de CounterI). El primero es el estilo RPC.
+
+% ======================================================================
+% ICE - Transparencia de localización, IceGrid, replicación
+% ======================================================================
+---
+T: Ice - Localización
+P: ¿Qué es un proxy DIRECTO?
+a) Un proxy que lleva los endpoints concretos del servidor.
+b) Un proxy que solo lleva un nombre simbólico del adaptador, tras una @.
+c) Un proxy en modo oneway, que envía la petición sin esperar respuesta.
+d) El proxy del propio Locator, que todos los clientes conocen de antemano.
+R: a
+E: Incluye protocolo, host y puerto. Problema: si cambia la IP o el puerto, o el servidor se mueve de nodo, la referencia deja de valer. Los proxies indirectos resuelven esto.
+---
+P: ¿Qué es un proxy INDIRECTO como «printer1 -t -e 1.1 @ PrinterAdapter1»?
+a) Un proxy con varios endpoints, que el cliente prueba hasta conectar con uno.
+b) Un proxy sin endpoints que lleva el identificador del adaptador.
+c) Un proxy cuyas invocaciones viajan cifradas con TLS hasta el adaptador.
+d) Un proxy cuyas invocaciones pasan por un servidor intermedio antes de llegar.
+R: b
+E: El Locator lo traduce a uno directo en el momento de invocar. Así Ice proporciona transparencia de localización: el cliente usa el objeto sin conocer su ubicación.
+---
+P: ¿Qué hace el servicio Locator de Ice?
+a) Arranca automáticamente los servidores cuando un cliente los necesita.
+b) Cifra las conexiones entre los clientes y los servidores registrados.
+c) Convierte un proxy indirecto en uno directo cuando un cliente se lo pide.
+d) Reparte las peticiones de los clientes entre varias réplicas del servidor.
+R: c
+E: Responde a las consultas de los clientes (findAdapterById, findObjectById). El Registry (LocatorRegistry) es la cara que usan los servidores para darse de alta (setAdapterDirectProxy). Ambos se parecen a un DNS dinámico, pero para objetos.
+---
+P: ¿Qué hay que cambiar en el CÓDIGO del servidor «hola mundo» para que genere proxies indirectos usando un Locator?
+a) Crear el adaptador con createObjectAdapterWithLocator() en lugar del normal.
+b) Nada: basta con configurar AdapterId y Locator.
+c) Registrar el sirviente con addWithLocator() en lugar de add().
+d) Volver a compilar el Slice con slice2py y la opción --locator.
+R: b
+E: Las propiedades son <Adaptador>.AdapterId y <Adaptador>.Locator (o Ice.Default.Locator). Ejemplo: PrinterAdapter.AdapterId=PrinterAdapter1 y PrinterAdapter.Locator=IceGrid/Locator -t:tcp -h 127.0.0.1 -p 4061. Con eso, el mismo código imprime un proxy indirecto.
+---
+P: ¿Qué necesita un CLIENTE para poder invocar un proxy indirecto?
+a) Nada: el runtime encuentra el Locator por difusión en la red local.
+b) Conocer el Locator, con Ice.Default.Locator.
+c) Tener en el código el AdapterId del servidor para resolverlo a mano.
+d) Saber la IP del servidor, que se combina con el nombre del adaptador.
+R: b
+E: Normalmente se pone la propiedad Ice.Default.Locator en su configuración. Sin ella, el cliente no sabría cómo resolver el proxy indirecto.
+---
+P: ¿Se consulta al Locator en CADA invocación sobre un proxy indirecto?
+a) Sí, en cada invocación, para tener siempre la dirección actualizada.
+b) No: solo la primera vez, y otra vez si falla la conexión.
+c) Nunca: el servidor envía su dirección al cliente al arrancar.
+d) Cada 60 segundos, que es el timeout por defecto de los endpoints.
+R: b
+E: El runtime del cliente cachea el proxy directo y solo vuelve a preguntar si falla una invocación sobre el proxy cacheado. Por eso la indirección no es especialmente ineficiente.
+---
+P: ¿Qué ventajas aporta el proxy indirecto al cliente?
+a) La referencia sigue valiendo aunque el servidor cambie de IP, de puerto o de nodo.
+b) Las invocaciones son más rápidas, porque el Locator elige la ruta más corta.
+c) Las comunicaciones van cifradas, porque pasan por el Locator.
+d) Permite invocar al objeto aunque el servidor no tenga conexión de red.
+R: a
+E: Sigue siendo la misma también si el servidor tiene endpoints nuevos. Además habilita redundancia, tolerancia a fallos y balanceo de carga.
+---
+P: Sin IceGrid, ¿qué replicación básica ofrece Ice?
+a) Ninguna: sin IceGrid cada proxy apunta a un único servidor.
+b) Un proxy con varios endpoints, que el cliente prueba hasta que uno responde.
+c) La copia automática de los sirvientes a todos los nodos de la red.
+d) El envío de cada invocación por multicast a todos los servidores a la vez.
+R: b
+E: El runtime los prueba (por defecto en orden aleatorio) hasta conectar con uno: failover transparente. Ejemplo: «alarm:tcp -h server1 -p 10001:tcp -h server2 -p 10002». Ice.Default.EndpointSelection puede ser random (por defecto) u ordered.
+
+% ======================================================================
+% ICE - IceStorm, AMI/AMD y patrones
+% ======================================================================
+---
+T: Ice - IceStorm
+P: ¿Qué propaga IceStorm a los suscriptores?
+a) Mensajes de texto genéricos, que cada suscriptor interpreta como quiere.
+b) Invocaciones de métodos de una interfaz Slice.
+c) Ficheros completos, que se copian en cada suscriptor.
+d) Estructuras de datos serializadas en JSON.
+R: b
+E: Es una implementación distribuida del patrón observador (publicación-suscripción). A diferencia de otros servicios (CORBA Notification, DDS, JMS), que envían estructuras de datos. Por eso, al prototipar, se puede quitar el canal e invocar directamente a un suscriptor.
+---
+P: ¿Qué tipo de invocaciones puede propagar un canal de IceStorm?
+a) Cualquiera, incluidas las que devuelven valores.
+b) Solo oneway o datagram, sin valor de retorno.
+c) Solo twoway, para confirmar la entrega a cada suscriptor.
+d) Solo asíncronas (AMI), para no bloquear al publicador.
+R: b
+E: Sería muy complicado gestionar las respuestas de todos los suscriptores hacia un mismo origen.
+---
+T: Ice - AMI y AMD
+P: ¿Qué es AMI (Asynchronous Method Invocation) en Ice?
+a) Una técnica del servidor para no ocupar un hilo por cada petición lenta.
+b) Una técnica del cliente: invoca la versión «...Async» y recibe un future.
+c) Un modo de transporte de Ice que envía las peticiones por UDP.
+d) Un servicio de eventos que reenvía las invocaciones a varios suscriptores.
+R: b
+E: El cliente obtiene el future inmediatamente y sigue trabajando. Ejemplo: future = math.factorialAsync(6); ... future.result(). El servidor no participa ni puede saber si la invocación fue síncrona o asíncrona. a) es AMD.
+---
+P: ¿De qué formas se puede recoger el resultado de una invocación AMI?
+a) Solo bloqueando con future.result() justo después de invocar.
+b) Con future.result(), con un callback o consultando si ha terminado.
+c) Solo registrando un callback, porque result() no existe en AMI.
+d) Leyendo el resultado de un fichero que escribe el runtime al terminar.
+R: b
+E: future.result() espera el resultado (bloquea si aún no ha llegado), future.add_done_callback(cb) registra un callback, y también se puede comprobar periódicamente (polling). El callback obtiene el resultado (o la excepción) con future.result().
+---
+P: ¿Qué es AMD (Asynchronous Method Dispatching) en Ice?
+a) La versión asíncrona del cliente: invoca «...Async» y sigue trabajando.
+b) Un balanceador que reparte las peticiones entre varios servidores.
+c) La versión de AMI en el servidor: el sirviente responde más tarde.
+d) Un tipo de proxy que agrupa varias invocaciones en un solo mensaje.
+R: c
+E: El sirviente devuelve un Ice.Future enseguida, encola la tarea y la completa más tarde (por ejemplo, desde un worker), liberando el hilo de despachado. Se activa con ["amd"] en la operación Slice. Es transparente al cliente. a) es AMI y d) las invocaciones batch.
+---
+P: ¿Qué metainformación hay que añadir en Slice para usar AMD en una operación?
+a) ["ami"]
+b) ["amd"]
+c) idempotent
+d) ["async"]
+R: b
+E: Ejemplo: ["amd"] long factorial(int value); AMI, en cambio, no requiere cambios en Slice: las versiones ...Async se generan siempre.
+---
+P: ¿Son AMI y AMD dependientes entre sí?
+a) Sí: si el cliente usa AMI, el servidor tiene que usar AMD en esa operación.
+b) No: cada lado decide por su cuenta y el otro no lo nota.
+c) Solo funcionan juntos si los servidores se despliegan con IceGrid.
+d) Sí: AMD solo se puede usar en operaciones invocadas en modo oneway.
+R: b
+E: Están completamente desacoplados: para el cliente es indistinguible si el servidor despacha de forma síncrona o asíncrona, y viceversa. Incluso un servidor puede usar AMD para despachar y AMI para invocar a otros objetos.
+---
+T: Ice - Patrones
+P: ¿Qué es una factoría de objetos en Ice?
+a) Un objeto remoto que crea objetos nuevos y devuelve sus proxies.
+b) El compilador de Slice que genera las clases del proxy y del sirviente.
+c) Un servicio que arranca servidores en otros nodos cuando se necesitan.
+d) Un tipo de excepción que se lanza cuando no se puede crear un sirviente.
+R: a
+E: A petición del cliente, crea sirvientes, los registra en su adaptador y devuelve sus proxies. Ejemplo: Printer* make(string name). Dentro, el sirviente hace current.adapter.addWithUUID(PrinterI(name)) y devuelve el proxy.
+---
+P: ¿Incluye Ice un recolector de basura distribuido para los objetos creados por una factoría?
+a) Sí: igual que Java RMI, cuenta las referencias remotas que hay a cada objeto.
+b) No: el ciclo de vida es cosa del programador, por ejemplo con destroy().
+c) Sí: usa préstamos (leases) que el cliente debe renovar cada pocos minutos.
+d) Sí, pero solo para los servidores escritos en C++, no para los de Python.
+R: b
+E: Lo habitual es una operación destroy() que retira el sirviente del adaptador. Java RMI usa conteo de referencias con leases que el cliente renueva; Ice deja el ciclo de vida en manos del diseño de la aplicación.
+---
+P: ¿Qué es el patrón «default servant»?
+a) Un único sirviente que atiende a muchos objetos, distinguiéndolos por current.id.
+b) El primer sirviente que se registra en un adaptador, que atiende si no hay otro.
+c) Un sirviente que no implementa ninguna interfaz y responde solo a ice_ping().
+d) El sirviente del Locator, que atiende las consultas de todos los clientes.
+R: a
+E: Se registra con addDefaultServant() y atiende a muchos objetos (potencialmente infinitos) del mismo tipo. El adaptador busca primero en su tabla (ASM) y, si no encuentra la identidad, usa el sirviente por defecto de esa categoría. Debe lanzar ObjectNotExistException para las identidades no válidas y sobrecargar ice_ping().
+
+% ======================================================================
+% SPOTIFICE - Arquitectura e interfaces (v0)
+% ======================================================================
+---
+T: Spotifice - Arquitectura
+P: ¿Cuáles son los tres componentes de Spotifice y qué papel tiene cada uno?
+a) provider (sirve las pistas), render (reproduce) y control (da las órdenes).
+b) provider (pide las pistas), render (sirve el audio) y control (las almacena).
+c) server (guarda las pistas), client (las reproduce) y broker (reparte los eventos).
+d) Un único programa con tres hilos: uno lee, otro decodifica y otro reproduce.
+R: a
+E: media_provider es el servidor de pistas (biblioteca y streaming); media_render, el reproductor, es a la vez servidor (recibe órdenes del control) y cliente (pide los fragmentos de audio al provider); media_control es un cliente que maneja a los dos.
+---
+P: ¿Qué interfaces agrupa MediaProvider en spotifice_v0.ice?
+a) RenderConnectivity y ContentManager
+b) MusicLibrary y StreamManager
+c) MusicLibrary y PlaybackController
+d) StreamManager y ContentManager
+R: b
+E: Herencia múltiple de interfaces: interface MediaProvider extends MusicLibrary, StreamManager {}. MusicLibrary tiene get_all_tracks y get_track_info; StreamManager, open_stream, close_stream y get_chunk.
+---
+P: ¿Qué interfaces agrupa MediaRender en spotifice_v0.ice?
+a) MusicLibrary y StreamManager
+b) RenderConnectivity, ContentManager y PlaybackController
+c) RenderConnectivity, StreamManager y PlaybackController
+d) ContentManager, PlaybackController y MusicLibrary
+R: b
+E: RenderConnectivity: bind/unbind_media_provider. ContentManager: load_track, get_current_track. PlaybackController: play, stop.
+---
+P: ¿Qué es TrackInfo en spotifice_v0.ice y qué implica?
+a) Una interfaz remota: se pasa por referencia y el cliente invoca sus métodos.
+b) Una class Slice (id, title): se pasa por valor y puede ser nula.
+c) Un struct Slice: se pasa por valor, pero nunca puede ser nulo.
+d) Una excepción que el provider lanza cuando la pista no existe.
+R: b
+E: Las clases Slice viajan serializadas como copia. Por eso get_current_track() puede devolver None si no hay pista cargada. El render guarda la TrackInfo que le devuelve el provider en self.current_track.
+---
+P: ¿Cómo está definida la jerarquía de excepciones de Spotifice?
+a) Cada excepción es independiente y declara sus propios campos.
+b) Hay una excepción base Error de la que derivan las demás.
+c) Todas heredan de Ice::LocalException, como las del runtime.
+d) Solo existe TrackError, que se usa para todos los fallos.
+R: b
+E: exception Error {optional(1) string item; string reason;}; de ella derivan IOError, BadIdentity, BadReference, PlayerError, StreamError y TrackError. Son excepciones de usuario (Ice.UserException), declaradas en las operaciones con throws. Viajan al cliente como excepciones remotas (comprobado: isinstance(e, Spotifice.Error) es True).
+---
+P: En la excepción Error, el campo item es «optional(1) string item». ¿Qué significa?
+a) Que item es opcional (etiqueta 1): si no se da, vale Ice.Unset.
+b) Que item es el primer campo obligatorio y debe darse siempre.
+c) Que item solo puede contener una cadena de 1 carácter como máximo.
+d) Que la excepción entera es opcional y el método puede no lanzarla.
+R: a
+E: Puede no enviarse. Por ejemplo, PlayerError(reason="Already playing") no fija item, que queda como Ice.Unset (comprobado). TrackError(track_id, "Track not found") sí lo fija.
+---
+P: ¿Qué tipo Python recibe el render cuando llama a get_chunk() (AudioChunk = sequence<byte>)?
+a) list de int
+b) bytes
+c) str
+d) bytearray
+R: b
+E: El mapping de Python convierte sequence<byte> en bytes (comprobado). El primer fragmento empieza por b'OggS' porque el provider transcodifica a Ogg/Opus.
+---
+P: StreamManager usa el parámetro Ice::Identity media_render_id en open_stream, close_stream y get_chunk. ¿Para qué?
+a) Para autenticar al usuario que escucha antes de servirle audio.
+b) Para saber qué render pide: el provider guarda un stream por render.
+c) Para elegir el códec de audio que mejor encaja con cada render.
+d) Para registrar al render en el Locator la primera vez que pide audio.
+R: b
+E: El provider guarda los streams activos en un diccionario (active_streams) indexado por la identidad en texto. El render pasa current.id, la identidad de su propio objeto. Así varios renders pueden reproducir a la vez desde el mismo provider.
+---
+P: ¿Cómo genera el provider el identificador (id) de cada pista?
+a) Con el nombre del fichero sin la extensión .mp3.
+b) Con un hash SHA-1 de los primeros 256 KiB de audio.
+c) Con el título de la etiqueta ID3 pasado a minúsculas.
+d) Con un contador que empieza en 0 al arrancar el provider.
+R: b
+E: metadata.identify(): SHA-1 del audio sin las etiquetas ID3, truncado a 16 dígitos hexadecimales. Renombrar o reetiquetar el fichero no cambia el id. La prueba test_track_id_does_not_depend_on_the_filename comprueba que el id no contiene '1s' ni '.mp3'.
+---
+P: ¿De dónde saca el provider el título de una pista?
+a) Siempre del nombre del fichero, sin la extensión.
+b) De la etiqueta ID3 TIT2 o, si no la hay, del nombre del fichero.
+c) De una base de datos que se descarga al arrancar el provider.
+d) Del propio id de la pista, que codifica el título en hexadecimal.
+R: b
+E: metadata.title(). Si no hay etiqueta, usa el nombre del fichero sin extensión. Por eso las pistas de prueba 1s.mp3, 2s.mp3… tienen títulos '1s', '2s'…
+---
+P: ¿Qué ficheros carga el provider al arrancar (load_media)?
+a) Todos los ficheros del directorio de contenido, sea cual sea su tipo.
+b) Los .mp3 del directorio de contenido, saltándose los que no puede leer.
+c) Solo los .mp3 que tienen etiqueta ID3 con título y artista.
+d) Ninguno: los abre cuando un render pide por primera vez cada pista.
+R: b
+E: Los que no se pueden leer se saltan con un aviso, sin impedir el arranque. El directorio lo da la propiedad Spotifice.MediaProvider.Content (por defecto 'media').
+---
+P: ¿Qué formato de audio sirve el provider al render?
+a) El MP3 original sin tocar.
+b) Ogg/Opus a 64 kbps.
+c) WAV sin comprimir a 44,1 kHz.
+d) FLAC sin pérdidas.
+R: b
+E: Transcodificado con GStreamer (48 kHz, estéreo): filesrc ! decodebin ! audioconvert ! audioresample ! ... ! opusenc bitrate=64000 ! oggmux ! appsink. Las pruebas comprueban que empieza por 'OggS' y que va a unos 64 kbps.
+---
+P: Un render pide get_chunk() sin haber abierto antes un stream. ¿Qué ocurre?
+a) Devuelve b'', como si la pista ya hubiera terminado.
+b) Se lanza StreamError: «No open stream for render».
+c) Se lanza TrackError, porque no hay pista asociada al render.
+d) El provider abre un stream automáticamente con la primera pista.
+R: b
+E: El item de la excepción es la identidad del render. Lo comprueba test_get_audio_chunk_not_started_stream.
+---
+P: ¿Qué pasa si se llama a open_stream con una identidad de render cuyo name está vacío?
+a) Se abre igualmente, asociado a la identidad vacía.
+b) BadIdentity con reason «Invalid render identity».
+c) StreamError con reason «No open stream for render».
+d) El provider le asigna al render una identidad aleatoria.
+R: b
+E: test_open_stream_wrong_render. Si el track_id no existe, antes se lanza TrackError («Track not found»), porque get_track() se comprueba primero.
+---
+P: ¿Qué devuelve get_chunk() cuando la pista se ha terminado?
+a) None, y el stream sigue abierto por si se vuelve a pedir.
+b) b'' (vacío), y el provider cierra el stream.
+c) Lanza StreamError, porque ya no quedan datos que leer.
+d) Vuelve al principio de la pista y sigue enviando datos.
+R: b
+E: El reproductor interpreta un fragmento vacío como fin de pista (EXHAUSTED). Si en cambio el lector devuelve None (error), lo interpreta como stream abortado (ABORTED).
+---
+P: ¿Qué ocurre si un render llama a open_stream mientras ya tenía un stream abierto?
+a) Error: cada render solo puede tener un stream y debe cerrarlo antes.
+b) El provider cierra el stream anterior y abre el nuevo.
+c) El provider mezcla los dos streams y envía el audio de ambos.
+d) Se ignora la llamada y el render sigue con el stream anterior.
+R: b
+E: open_stream llama primero a self.close_stream(render_id). Por eso es idempotente.
+
+% ======================================================================
+% SPOTIFICE - Comportamiento del render (v0) y código
+% ======================================================================
+---
+T: Spotifice - Render y código
+P: El control llama a render.play() sin haber hecho bind_media_provider(). ¿Qué ocurre?
+a) Reproduce la última pista que se cargó antes de reiniciar.
+b) BadReference con reason «No MediaProvider bound».
+c) TrackError con reason «No track loaded».
+d) PlayerError con reason «Already playing».
+R: b
+E: play() comprueba en este orden: provider vinculado (BadReference), pista cargada (TrackError «No track loaded») y reproductor parado (PlayerError «Already playing»). Lo comprueba test_play_unbound_provider.
+---
+P: Con el provider vinculado pero sin pista cargada, se llama a play(). ¿Qué excepción y razón se obtienen?
+a) TrackError, «No track loaded»
+b) BadReference, «No MediaProvider bound»
+c) PlayerError, «No track»
+d) StreamError, «No open stream»
+R: a
+E: test_play_unloaded_track.
+---
+P: El render está reproduciendo y se vuelve a invocar play(). ¿Qué ocurre?
+a) Vuelve a empezar la pista actual desde el principio.
+b) PlayerError con reason «Already playing».
+c) Nada: la llamada se ignora y la pista sigue sonando.
+d) Se abre un segundo stream y suenan dos pistas a la vez.
+R: b
+E: ensure_player_stopped(). Lo comprueba test_can_not_play_if_player_busy.
+---
+P: ¿Qué hace load_track() si el render está reproduciendo?
+a) Lanza PlayerError, porque no se puede cambiar de pista mientras suena.
+b) Cambia de pista y la sigue reproduciendo.
+c) Cambia la pista actual, pero deja el reproductor parado.
+d) Guarda la nueva pista y la reproduce cuando termine la actual.
+R: b
+E: Para la reproducción, cambia la pista actual y vuelve a reproducir: mantiene el estado de reproducción (gestor de contexto keep_playing_state). test_load_track_while_playing comprueba que, tras cargar otra pista mientras suena, get_current_track() devuelve la nueva.
+---
+P: ¿Cómo obtiene load_track() la TrackInfo de la nueva pista?
+a) La construye el propio render a partir del id que recibe.
+b) Se la pide al provider con get_track_info(track_id).
+c) La lee de un fichero local con los metadatos de las pistas.
+d) La recibe del control, junto con el id, como segundo argumento.
+R: b
+E: Invoca self.provider.get_track_info(track_id); si la pista no existe, se propaga TrackError. Antes comprueba que haya provider vinculado (BadReference si no).
+---
+P: MediaRenderI.play() empieza con «assert current, "remote invocation required"». ¿Por qué necesita current?
+a) Para saber qué cliente lo ha llamado y responderle cuando termine la pista.
+b) Para usar current.id, su propia identidad, como clave del stream.
+c) Para conocer el puerto en el que escucha su adaptador y pasárselo al provider.
+d) Para comprobar que la llamada llega cifrada desde el control.
+R: b
+E: open_stream(current.id, ...) y get_chunk(current.id, ...). Si se llamara localmente sin current no habría identidad que pasar al provider.
+---
+P: ¿Qué hace unbind_media_provider() en el render?
+a) Borra el proxy del provider, pero deja la pista sonando hasta que termine.
+b) Para la reproducción y deja el render sin provider.
+c) Destruye el objeto provider en el servidor para liberar la memoria.
+d) Lanza BadReference si el render no tenía ningún provider vinculado.
+R: b
+E: Hace stop() y deja self.provider a None; si stop falla, lo registra en el log y desvincula igualmente. Es idempotente: desvincular dos veces deja el mismo estado.
+---
+P: ¿Cómo recibe el reproductor (GstPlayer) los datos de audio?
+a) Lee el MP3 del disco local, que el provider le copia al empezar.
+b) Pidiendo cada fragmento al provider con get_chunk() cuando lo necesita.
+c) El provider le envía los fragmentos por push a través de IceStorm.
+d) Descarga la pista entera del provider antes de empezar a reproducir.
+R: b
+E: Usa una función read_chunk (creada por chunk_reader en el render) que invoca provider.get_chunk(render_id, tamaño) cada vez que GStreamer necesita datos (señal need-data del appsrc). Es un modelo pull. Si get_chunk lanza IOError, read_chunk devuelve None y el reproductor aborta el stream.
+---
+P: ¿Qué hace media_control.py en su main()?
+a) Arranca el provider y el render en dos hilos y espera a que terminen.
+b) Vincula el render al provider, reproduce una pista 5 s y luego otra.
+c) Lee la configuración, la imprime y termina sin invocar nada.
+d) Crea un adaptador de objetos y espera peticiones de los otros dos.
+R: b
+E: Obtiene los proxies, lista las pistas, vincula el render al provider, carga la primera pista, la reproduce 5 s, para, carga la segunda y la reproduce. Es un cliente puro (no crea adaptador). En los ejercicios se recomienda adaptarlo para probar las nuevas operaciones.
+---
+P: ¿Cómo termina de forma ordenada un servidor de Spotifice (provider o render) al pulsar Ctrl+C?
+a) Con sys.exit() inmediato desde el manejador de la señal.
+b) Un manejador de la señal llama a ic.shutdown() y el bucle principal termina.
+c) No se puede parar con Ctrl+C: hay que cerrar la terminal.
+d) Con una KeyboardInterrupt sin capturar, que cierra el programa.
+R: b
+E: shutdown_on_interrupt instala manejadores de SIGINT y SIGTERM que llaman a ic.shutdown(); el bucle principal comprueba ic.isShutdown() cada 0,5 s y termina. Los manejadores solo se instalan si se está en el hilo principal, porque las pruebas ejecutan main() en otro hilo (ThreadIceServer).
+---
+P: ¿Qué hace «make test» en Spotifice?
+a) Compila los .ice y comprueba que no tienen errores.
+b) Ejecuta pytest sobre cada test/test_*.py, parando al primer fallo.
+c) Lanza demo.sh y comprueba que suena la primera pista.
+d) Descarga la música de ejemplo y verifica sus identificadores.
+R: b
+E: Hace pytest -v sobre cada fichero. Las pruebas (test_provider, test_render, test_player, test_transcoder) deben seguir pasando en los ejercicios 1 y 2.
+---
+P: ¿Cómo arrancan los servidores las pruebas automáticas de Spotifice (test/icetest.py)?
+a) Lanzando cada componente con su fichero .config, igual que hace el Makefile.
+b) Ejecutando la main() de cada componente en un hilo, con las propiedades en un diccionario.
+c) Con subprocess, ejecutando demo.sh en una sesión de tmux distinta por cada prueba.
+d) Desplegándolos con IceGrid en un registro temporal que se borra al terminar.
+R: b
+E: Crean un comunicador con Ice.InitializationData y las propiedades en un diccionario, y ejecutan la main() en un hilo (ThreadIceServer). Por eso los enunciados prohíben cambiar las funciones main() y los nombres de las propiedades de configuración.
+---
+P: ¿Qué hace demo.sh?
+a) Ejecuta las pruebas automáticas y muestra el resultado de cada una.
+b) Abre tmux y lanza provider, render y control, cada uno con su configuración.
+c) Instala las dependencias de Python y descarga la música de ejemplo.
+d) Genera la documentación HTML de los ficheros Slice del proyecto.
+R: b
+E: Abre una sesión de tmux con varios paneles y arranca media_provider.py --Ice.Config=provider.config, media_render.py --Ice.Config=render.config y media_control.py --Ice.Config=control.config.
+---
+P: ¿Qué hace el objetivo «make check-slice» del Makefile?
+a) Ejecuta las pruebas automáticas que usan el Slice.
+b) Comprueba el Slice generando su documentación con slice2html.
+c) Formatea los ficheros .ice con un estilo uniforme.
+d) Descarga los Slice de Ice que incluye spotifice_v0.ice.
+R: b
+E: Si el Slice tiene errores, falla. Regla check-%.ice: slice2html -I /usr/share/ice/slice $< --output-dir /tmp.
+---
+P: ¿En qué puertos escuchan por defecto el provider y el render según los .config de Spotifice?
+a) provider 10000, render 10001
+b) provider 4061, render 4062
+c) provider 10001, render 10000
+d) Ambos en 10000
+R: a
+E: provider.config: Spotifice.MediaProviderAdapter.Endpoints = tcp -p 10000. render.config: Spotifice.MediaRenderAdapter.Endpoints = tcp -p 10001. control.config apunta a mediaProvider0:tcp -p 10000 y mediaRender0:tcp -p 10001.
+
+% ======================================================================
+% EJERCICIO 1 - Control de la reproducción (spotifice_v1.ice)
+% ======================================================================
+---
+T: Ejercicio 1 (v1)
+P: ¿Qué añade spotifice_v1.ice respecto a v0?
+a) La clase Playlist y la interfaz PlaylistManager, con next() y previous().
+b) Estados de reproducción y las operaciones pause, get_status, previous y set_repeat.
+c) Una interfaz nueva, PlayerManager, que sustituye a PlaybackController.
+d) Una operación seek() para saltar a un punto de la pista y la clase TrackPosition.
+R: b
+E: Añade el enum PlaybackState (PLAYING, PAUSED, STOPPED), la clase PlaybackStatus (state, current_track, is_repeating) y cuatro operaciones en PlaybackController. El resto de interfaces no cambia. Los tres componentes deben cargar spotifice_v1.ice en lugar de spotifice_v0.ice. a) es el ejercicio 2.
+---
+P: En v1, ¿cuáles de las nuevas operaciones están marcadas como idempotent?
+a) Todas: pause(), get_status(), previous() y set_repeat().
+b) pause(), get_status() y set_repeat(); previous() no.
+c) Solo get_status(), porque es la única que no cambia nada.
+d) get_status() y previous(); pause() y set_repeat() no.
+R: b
+E: Pausar algo ya pausado no cambia nada; consultar el estado no lo modifica; fijar la repetición a un valor es idempotente. previous() no lo es: cada llamada retrocede más en el histórico.
+---
+P: ¿En qué estado está el render al arrancar (v1)?
+a) PLAYING, con la primera pista del provider.
+b) STOPPED y sin pista cargada.
+c) PAUSED, con la última pista que se reprodujo.
+d) STOPPED, con la primera pista del provider cargada.
+R: b
+E: get_status() devolvería state=STOPPED, current_track nula e is_repeating=False (la repetición está desactivada por defecto).
+---
+P: (v1) El render está en PAUSED y se invoca play(). ¿Qué ocurre?
+a) PlayerError, porque play() solo se puede usar desde STOPPED.
+b) Reanuda en el mismo punto y pasa a PLAYING.
+c) Vuelve a empezar la pista desde el principio y pasa a PLAYING.
+d) No hace nada: para salir de la pausa hay que volver a llamar a pause().
+R: b
+E: pause() suspende la pista actual, que se reanuda en el mismo punto con play().
+---
+P: (v1) El render está en STOPPED y se invoca pause(). ¿Qué ocurre?
+a) Pasa a PAUSED con la pista actual al principio.
+b) PlayerError con reason «Cannot pause when stopped».
+c) No hace nada, porque pause() es idempotente.
+d) BadReference, porque no hay stream abierto.
+R: b
+E: Es uno de los textos de error fijados en el Cuadro 2 del enunciado. Que pause() sea idempotente se refiere a llamarla estando ya en PAUSED.
+---
+P: (v1) El render está en PAUSED y se invoca pause() otra vez. ¿Qué ocurre?
+a) PlayerError con reason «Already paused».
+b) No hace nada.
+c) Reanuda la reproducción, como un interruptor.
+d) Pasa a STOPPED y vuelve al principio de la pista.
+R: b
+E: Cuadro 1: pause() en PAUSED no hace nada (es idempotente).
+---
+P: (v1) El render está en PLAYING y se invoca play(). ¿Qué ocurre?
+a) Reanuda la reproducción, que ya estaba en marcha.
+b) PlayerError con reason «Already playing».
+c) Reinicia la pista actual desde el principio.
+d) No hace nada, porque play() es idempotente.
+R: b
+E: Igual que en la versión base. play() no es idempotente.
+---
+P: (v1) El render está en PAUSED y se carga otra pista con load_track(). ¿En qué estado queda?
+a) PLAYING, con la nueva pista desde el principio.
+b) PAUSED, con la nueva pista.
+c) STOPPED, con la nueva pista cargada.
+d) PlayerError, porque no se puede cambiar de pista en pausa.
+R: b
+E: Cambiar de pista (load_track o previous) conserva el estado: STOPPED sigue en STOPPED, PLAYING reproduce la nueva y PAUSED la deja en pausa. La nueva pista siempre empieza desde el principio.
+---
+P: (v1) Tras stop() se invoca play(). ¿Desde dónde se reproduce la pista?
+a) Desde el punto en el que se paró.
+b) Desde el principio.
+c) No se puede: stop() descarga la pista actual.
+d) Desde el principio de la pista siguiente.
+R: b
+E: stop() conserva la pista actual, pero no la posición. A diferencia de pause(), que sí conserva la posición.
+---
+P: (v1) La pista actual termina mientras se reproduce. ¿Qué pasa según esté o no activada la repetición?
+a) En ambos casos pasa a STOPPED y la pista actual queda vacía.
+b) Con repetición vuelve a empezar; sin ella pasa a STOPPED y conserva la pista.
+c) Con repetición pasa a PAUSED al principio; sin ella pasa a STOPPED sin pista.
+d) En ambos casos vuelve a empezar, porque la repetición solo afecta a previous().
+R: b
+E: Con repetición sigue en PLAYING; sin repetición pasa a STOPPED y la pista sigue siendo la actual. set_repeat(enabled) activa o desactiva la repetición de la pista actual (desactivada por defecto).
+---
+P: (v1) Secuencia: load_track(A), load_track(B), previous(). ¿Cuál es la pista final?
+a) A
+b) B
+c) Ninguna
+d) Error
+R: a
+E: previous() vuelve a la pista cargada antes de la actual y descarta la abandonada (B).
+---
+P: (v1) Secuencia: load_track(A), load_track(B), load_track(C), previous(), previous(). ¿Pista final?
+a) A
+b) B
+c) C
+d) Ninguna
+R: a
+E: C → B (se descarta C) → A (se descarta B). Un nuevo previous() retrocede todavía más; no vuelve a la pista abandonada.
+---
+P: (v1) Secuencia: load_track(A), load_track(B), previous(), previous(). ¿Pista final?
+a) A
+b) B
+c) Ninguna
+d) PlayerError
+R: a
+E: El segundo previous() no tiene pista anterior a A, así que no hace nada.
+---
+P: (v1) Secuencia: load_track(A), load_track(B), load_track(B), previous(). ¿Pista final?
+a) A
+b) B
+c) Ninguna
+d) Error
+R: a
+E: Volver a cargar la pista actual no cambia el histórico (sigue siendo [A, B]), así que previous() vuelve a A.
+---
+P: (v1) Secuencia: load_track(A), load_track(B), previous(), load_track(C), previous(). ¿Pista final?
+a) A
+b) B
+c) C
+d) Ninguna
+R: a
+E: Tras el primer previous() el histórico es [A]; load_track(C) lo deja en [A, C]; previous() vuelve a A (B se descartó).
+---
+P: (v1) Secuencia: load_track(A), load_track(B), load_track(A), previous(). ¿Pista final?
+a) A
+b) B
+c) Ninguna
+d) Error
+R: b
+E: Cada carga se añade al histórico aunque ya aparezca en él (solo se exceptúa recargar la pista ACTUAL): queda [A, B, A]. previous() descarta la última A y vuelve a B.
+---
+P: (v1) ¿Cuándo se vacía el histórico de pistas del render?
+a) Al pausar la reproducción o al llamar a stop().
+b) Al vincular o desvincular un MediaProvider.
+c) Cuando la pista actual termina y no hay repetición.
+d) Al activar o desactivar la repetición con set_repeat().
+R: b
+E: El histórico no cambia al reproducir, pausar o detener, ni cuando una pista termina. Si previous() falla, tampoco cambia.
+---
+P: (v1) Listado 2: bind, load_track(track1), play(), load_track(track2), pause(), previous(), play(), set_repeat(True), stop(). ¿Estado y pista tras previous()?
+a) PLAYING, track1
+b) PAUSED, track1
+c) PAUSED, track2
+d) STOPPED, track1
+R: b
+E: Estaba en PAUSED con track2; previous() cambia a track1 y conserva el estado PAUSED. Después play() → PLAYING track1 y stop() → STOPPED track1.
+---
+P: (v1) ¿Qué ficheros hay que tocar en el ejercicio 1 y qué NO se debe modificar?
+a) Solo media_control.py; el resto del proyecto no se toca.
+b) Sobre todo media_render.py, sin cambiar las main() ni las propiedades.
+c) Solo el .ice; el runtime genera el resto del código a partir de él.
+d) media_provider.py y su main(), que debe leer las nuevas propiedades.
+R: b
+E: Los tres componentes deben cargar spotifice_v1.ice y la mayor parte del trabajo está en media_render.py. No deben modificarse las funciones main() ni los nombres de las propiedades de configuración, porque las pruebas automáticas (make test) los usan y deben seguir pasando.
+
+% ======================================================================
+% EJERCICIO 2 - Playlists (spotifice_v2.ice)
+% ======================================================================
+---
+T: Ejercicio 2 (v2)
+P: ¿Depende el ejercicio 2 (playlists) del ejercicio 1?
+a) Sí: hay que tener hecho el ejercicio 1 y partir de spotifice_v1.ice.
+b) No: parte del proyecto base (v0).
+c) Solo del Cuadro 1 de estados, que se reutiliza para las playlists.
+d) Sí: las playlists usan PlaybackStatus para guardar la pista actual.
+R: b
+E: spotifice_v2.ice sustituye a spotifice_v0.ice. Aunque previous() y set_repeat() tienen la misma signatura que en v1, aquí actúan sobre la playlist cargada.
+---
+P: ¿Qué añade spotifice_v2.ice?
+a) El enum PlaybackState y la operación pause() en PlaybackController.
+b) Playlists: la clase Playlist, PlaylistManager, load_playlist, next, previous y set_repeat.
+c) Solo next() y previous() en PlaybackController, sin cambiar el provider.
+d) Un servicio IceStorm para avisar a los renders cuando cambia una playlist.
+R: b
+E: También la excepción PlaylistError. PlaylistManager ofrece get_all_playlists y get_playlist; load_playlist va en ContentManager y next, previous y set_repeat en PlaybackController. Además, MediaProvider ahora hereda también de PlaylistManager: interface MediaProvider extends MusicLibrary, PlaylistManager, StreamManager {}.
+---
+P: En v2, ¿de qué excepción deriva PlaylistError?
+a) De Ice::UserException directamente, sin campos propios.
+b) De Error, así que tiene item y reason.
+c) De TrackError, porque una playlist es una lista de pistas.
+d) De IOError, porque se lanza al leer los ficheros .playlist.
+R: b
+E: exception PlaylistError extends Error {}. Si get_playlist() no encuentra la playlist, lanza PlaylistError con item = identificador y reason = «Playlist not found».
+---
+P: En v2, el campo created_at de la clase Playlist es de tipo long. ¿Cómo se obtiene a partir del fichero .playlist?
+a) Se copia la cadena de la fecha tal cual, sin convertir.
+b) Se convierte la fecha DD-MM-AAAA a segundos desde epoch.
+c) Es el tamaño del fichero .playlist en bytes.
+d) Es la fecha de modificación del fichero en el disco.
+R: b
+E: En el JSON es por ejemplo "25-05-2011"; en el objeto Playlist es el número de segundos desde el 1-1-1970.
+---
+P: ¿Dónde busca el media_provider las playlists al arrancar (v2)?
+a) En el mismo directorio media, junto a los ficheros .mp3.
+b) En el directorio de la propiedad Spotifice.MediaProvider.Playlists.
+c) En una base de datos SQLite que se crea la primera vez que arranca.
+d) No las busca: se las envía el render cuando carga una playlist.
+R: b
+E: Es una propiedad nueva de provider.config (por defecto «playlists»); cada playlist es un JSON con extensión .playlist. La main() de media_provider.py lee esta propiedad y la pasa al constructor de MediaProviderI, igual que el directorio de pistas. Es la única main() que hay que modificar (la del render no cambia).
+---
+P: (v2) ¿Qué hace el provider con los identificadores de pista de una playlist que no existen en el provider?
+a) Lanza PlaylistError al arrancar.
+b) Los descarta.
+c) Los mantiene en la playlist.
+d) No carga esa playlist.
+R: b
+E: Además se descartan los ficheros que no se pueden leer o interpretar, sin impedir el arranque, y si el directorio no existe simplemente no hay playlists.
+---
+P: (v2) ¿Qué hace load_playlist(id) si la playlist no existe o está vacía?
+a) Carga una pista cualquiera del provider para no dejar el render vacío.
+b) Lanza PlaylistError y el reproductor no cambia.
+c) Para el reproductor y deja el render sin pista cargada.
+d) No hace nada y devuelve sin lanzar ninguna excepción.
+R: b
+E: Si existe y tiene pistas, carga su primera pista (manteniendo el estado de reproducción).
+---
+P: (v2) Con una playlist cargada, se está en la ÚLTIMA pista y se invoca next(). ¿Qué ocurre?
+a) Lanza PlaylistError, porque no hay pista siguiente.
+b) Nada, salvo con repetición: entonces carga la primera.
+c) Siempre vuelve a la primera pista, haya o no repetición.
+d) Para la reproducción y descarta la playlist.
+R: b
+E: set_repeat(enabled) activa o desactiva la repetición de la PLAYLIST (desactivada por defecto).
+---
+P: (v2) Con una playlist cargada, se está en la PRIMERA pista, con la repetición activada, y se invoca previous(). ¿Qué ocurre?
+a) Carga la última pista de la playlist, porque la repetición está activada.
+b) No hace nada.
+c) Lanza PlaylistError, porque no hay pista anterior.
+d) Para la reproducción y deja la primera pista cargada.
+R: b
+E: La repetición solo afecta al avance (next y fin de pista), no al retroceso: en la primera pista previous() no hace nada aunque la repetición esté activada.
+---
+P: (v2) Sin ninguna playlist cargada, ¿qué hacen next(), previous() y set_repeat()?
+a) Las tres lanzan PlaylistError, porque necesitan una playlist.
+b) next() y previous() nada; set_repeat() solo guarda el valor.
+c) next() y previous() recorren todas las pistas del provider en orden.
+d) Las tres paran el reproductor y vacían el histórico.
+R: b
+E: Sin playlist, el reproductor se comporta igual que en la versión base.
+---
+P: (v2) Termina una pista de la playlist mientras se reproduce. ¿Qué ocurre?
+a) Se para siempre, aunque queden pistas en la playlist, y conserva la pista actual.
+b) Carga la siguiente y sigue sonando; al final, solo sigue si hay repetición.
+c) Vuelve a empezar la misma pista, como hace la repetición del ejercicio 1.
+d) Se descarta la playlist y el render queda parado y sin ninguna pista cargada.
+R: b
+E: Si era la última: con repetición vuelve a la primera; sin repetición se para, y la última sigue siendo la pista actual. Al cambiar de pista, la nueva siempre empieza desde el comienzo.
+---
+P: (v2) ¿Qué operaciones DESCARTAN la playlist cargada?
+a) next() y previous(), cuando se llega al final de la playlist.
+b) load_track(), bind_media_provider() y unbind_media_provider().
+c) play() y stop(), porque reinician el reproductor.
+d) Ninguna: la playlist solo cambia con otro load_playlist().
+R: b
+E: unbind_media_provider() además detiene la reproducción. Cargar una pista suelta saca al render del modo playlist.
+---
+P: (v2) Listado 2: bind, load_playlist(p0) (parado, track1), play(), next(), stop(), previous(). ¿Estado y pista tras previous()?
+a) Reproduciendo, track1
+b) Parado, track1
+c) Parado, track2
+d) Reproduciendo, track2
+R: b
+E: next() → reproduciendo track2; stop() → parado track2; previous() cambia a track1 y conserva el estado (parado). Después play() reproduce track1, set_repeat(True) activa la repetición y next() → reproduciendo track2.
+---
+P: (v2) load_playlist() está marcada idempotent en Slice. ¿Tiene sentido?
+a) No: debería ser no idempotente, como next() y previous().
+b) Sí: cargarla dos veces deja el mismo estado.
+c) Solo tiene sentido si la playlist está vacía.
+d) No: una operación que lanza excepciones no puede ser idempotent.
+R: b
+E: Cargar dos veces la misma playlist deja su primera pista cargada, con el mismo estado de reproducción. En cambio next() y previous() no lo son: cada llamada mueve la posición dentro de la playlist.
+---
+P: (v2) ¿Qué componentes hay que modificar en el ejercicio 2?
+a) Solo media_render.py, sin tocar el provider.
+b) Provider (incluida su main()) y render; los tres cargan spotifice_v2.ice.
+c) Solo media_control.py, para probar las nuevas operaciones.
+d) Solo el .ice, porque el resto se genera a partir de él.
+R: b
+E: Los cambios se implementan en media_provider.py (incluida su main(), para leer la nueva propiedad) y en media_render.py (su main() no cambia). media_control.py se puede adaptar para probar secuencias como la del Listado 2, comprobando get_current_track() tras cada paso.

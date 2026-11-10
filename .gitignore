@@ -1,0 +1,9 @@
+# entorno de Python y cachés
+.venv/
+__pycache__/
+*.pyc
+
+# datos personales de cada uno (fallos y preferencias)
+fallos/
+fallos.json
+ajustes.json

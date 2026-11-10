@@ -1,0 +1,14 @@
+TEST TIPO AUTOESCUELA
+=====================
+
+Requisitos: Python 3.10 o superior con tkinter. No hace falta instalar nada más.
+
+- Windows: instala Python desde python.org (ya trae tkinter) y haz doble clic en lanzar.bat
+- Linux:   sudo apt install python3-tk   y después   python3 test_app.py
+- Mac:     instala Python desde python.org y ejecuta   python3 test_app.py
+
+Las preguntas están en la carpeta preguntas/, con una subcarpeta por asignatura. Puedes añadir tus propios .txt
+(el formato está explicado en README.md).
+Para comprobar que un .txt está bien escrito:   python3 test_app.py --check
+
+Tus fallos se guardan por asignatura en la carpeta fallos/ y el tema claro/oscuro en ajustes.json.

@@ -1,0 +1,3484 @@
+% Banco de preguntas de la Prueba 1 de Sistemas Distribuidos (UCLM, ESI): temas 1 a 4.
+% Recopiladas de los exámenes P1, P1R y P1X de cursos anteriores (carpeta Examenes/ssdd/P1),
+% más las del Tema 4 sacadas de los exámenes P2 y P2X, porque hasta este curso el Tema 4
+% entraba en la Prueba 2.
+% Las respuestas son las de las versiones .solved.pdf; las explicaciones son añadidas.
+% Las preguntas repetidas entre años aparecen una sola vez (se indican todas las fuentes).
+%
+% Formato de examen como los últimos cursos (24/25 y 25/26): 15 preguntas, 30 minutos y
+% cada 3 fallos restan 1. Reparto por temas: los temas 1, 2 y 3 llevaban 4-5 preguntas cada
+% uno y el Tema 4 entre 0 y 2; como este año el Tema 4 entra entero, se le dan 2.
+
+@titulo: SSDD - Prueba 1 (temas 1 a 4)
+@tiempo: 30
+@penalizacion: 3
+@preguntas: 15
+@reparto: Tema 1=4; Tema 2=4; Tema 3=5; Tema 4=2
+
+% ======================================================================
+% Curso 25/26 - P1  (fichero ssdd_2526_P1; ojo: su cabecera dice "Curso 24/25" y fecha 24/10/2024)
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Un sistema distribuido es un sistema en cuyos componentes, localizados en nodos interconectados, coordinan sus acciones mediante:
+a) Paso de mensajes o técnicas derivadas
+b) Memoria compartida o virtual
+c) El uso de un middleware
+d) Todas las respuestas son correctas
+R: a
+E: Definición de Coulouris: los componentes de un SD se comunican y coordinan sus acciones ÚNICAMENTE mediante paso de mensajes. No hay memoria compartida, y el middleware es una herramienta opcional, no parte de la definición.
+Fuente: 25/26 P1.
+---
+P: En un sistema distribuido podemos asumir que:
+a) La red es fiable
+b) La latencia es cero
+c) La topología de la red puede cambiar
+d) La red es segura
+R: c
+E: a), b) y d) son tres de las 8 falacias de la computación distribuida (suposiciones FALSAS). La falacia es "la topología no cambia"; lo que sí se puede asumir es que puede cambiar.
+Fuente: 25/26 P1.
+---
+P: ¿Cuál de las siguientes propiedades constituye una ventaja de la implementación de un sistema distribuido para proporcionar un servicio TIC?
+a) Interconexión de recursos (coste, fiabilidad, saturación, etc.)
+b) Seguridad de las comunicaciones.
+c) Disponibilidad.
+d) Software más simple.
+R: c
+E: Ventajas de un SD: compartición de recursos, coste/rendimiento, escalabilidad, disponibilidad, concurrencia. La interconexión de recursos y la seguridad de las comunicaciones son INCONVENIENTES, y el software es más complejo, nunca más simple.
+Fuente: 25/26 P1.
+---
+P: Un middleware de comunicaciones, en sistemas distribuidos:
+a) Se sitúa entre el sistema operativo y las aplicaciones distribuidas.
+b) Es un tipo de protocolo de comunicación.
+c) Su única función es la gestión de la seguridad
+d) Todas las respuestas son correctas
+R: a
+E: El middleware es una capa software entre la plataforma (hardware + SO) y las aplicaciones. No es un protocolo (aunque use protocolos) y sus funciones van mucho más allá de la seguridad.
+Fuente: 25/26 P1.
+---
+P: Señala la afirmación correcta:
+a) Si en un sistema comunicándose mediante HTTP, se realiza una petición GET y se usa el DNS para resolver la dirección IP del servidor, se está usando comunicación indirecta.
+b) La comunicación indirecta permite reducir la latencia del sistema
+c) En la comunicación directa, los procesos no necesitan conocer la identidad de los demás procesos con los que se comunican.
+d) La comunicación indirecta normalmente añade latencia al sistema
+R: d
+E: La comunicación indirecta mete un intermediario (broker, cola…) entre emisor y receptor: desacopla, pero añade un salto más y por tanto latencia. Usar DNS para resolver un nombre no convierte HTTP en comunicación indirecta (el cliente sigue hablando directamente con el servidor). En la comunicación directa los procesos SÍ deben conocerse.
+Fuente: 25/26 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: Si en el contexto de diseño de protocolos hablamos del significado de cada uno de los campos que forman un mensaje, ¿a qué concepto nos estamos refiriendo?
+a) Sintaxis
+b) Sincronización
+c) Semántica
+d) Temporización
+R: c
+E: Sintaxis = estructura/formato de los mensajes (campos, tipos, tamaños). Semántica = SIGNIFICADO de los campos y valores. Sincronización (o temporización) = orden y patrones de intercambio de mensajes.
+Fuente: 25/26 P1.
+---
+P: Te encuentras diseñando un protocolo, del cual debes seleccionar un formato de serialización de datos para los mensajes. Considerando que el protocolo está destinado a dispositivos de bajos recursos, y que el rendimiento es un aspecto muy importante, ¿cuál de los siguientes sería el formato más apropiado?
+a) Protocol Buffers
+b) JSON
+c) XML
+d) Todas las anteriores son adecuadas
+R: a
+E: Protocol Buffers es binario y compacto: mensajes más pequeños y serialización más rápida. JSON y XML son textuales, más grandes y más costosos de procesar.
+Fuente: 25/26 P1.
+---
+P: Se está definiendo la sintaxis de un protocolo para el control de un servomotor. El protocolo cuenta con 5 tipos de mensajes distintos. Uno de estos mensajes permite controlar la rotación del servomotor. Este mensaje estará formado por un identificador, que indicará la operación a realizar, y un campo de payload, que será un valor en el rango [-1024, 1024], indicando el grado de rotación con el valor numérico y la dirección con el signo. ¿Cuál debería ser el tamaño en bytes de este mensaje?
+a) 2
+b) 3
+c) 4
+d) 5
+e) 6
+R: b
+E: Identificador: 5 tipos de mensaje caben en 1 byte. Payload: [-1024, 1024] son 2049 valores → necesitan 12 bits → 2 bytes. Total 1 + 2 = 3 bytes. Error típico: olvidar el byte del identificador (2) o pensar que 2049 valores caben en 11 bits.
+Fuente: 25/26 P1.
+---
+P: Se quiere diseñar un protocolo para la comunicación del estado de un conjunto de motores a un sistema SCADA. Sabiendo que los motores cuentan con un sensor de temperatura y un acelerómetro para el control de vibración, indica cuál de los siguientes parece el formato de mensaje más adecuado.
+a) ID MENSAJE (1 B) | ID TEMP SENSOR (1 B) | TEMP (1 B) | ID ACC SENSOR (1 B) | ACC (1 B)
+b) ID MENSAJE (1 B) | TEMP (2 B) | ACC (2 B)
+c) ID MENSAJE (1 B) | ID MOTOR (1 B) | TEMP (1 B) | ACC (1 B)
+d) ID MENSAJE (1 B) | SERVER IP (2 B) | SERVER PORT (1 B) | TEMP (1 B) | ACC (1 B)
+R: c
+E: Hay VARIOS motores, así que hace falta saber de qué motor viene el dato (ID MOTOR); b) no lo tiene. Los ids de sensor de a) son redundantes (cada motor tiene un único sensor de cada tipo) y la IP/puerto de d) son cosa de las capas de red/transporte, no del mensaje de aplicación.
+Fuente: 25/26 P1 (bloque A).
+---
+P: A la hora de crear un protocolo, señala cuál de los siguientes aspectos hay que considerar:
+a) Los lenguajes de programación que van a usarse.
+b) El sistema operativo de los nodos que se comunican.
+c) La velocidad a la que se procesarán los mensajes.
+d) La extensibilidad de las soluciones.
+R: d
+E: Un protocolo debe ser independiente del lenguaje y del SO de cada extremo (eso es lo que permite la interoperabilidad). Entre las consideraciones de diseño no funcionales, la extensibilidad (poder añadir mensajes/campos en versiones futuras) es la respuesta típica.
+Fuente: 25/26 P1.
+---
+T: Tema 3 - Invocación remota
+P: ¿Cuál de las siguientes operaciones NO es idempotente?
+a) Consultar el saldo de una cuenta bancaria.
+b) Asignar un valor fijo a una variable (x = 5).
+c) Incrementar el valor de un contador (x = x + 1).
+d) Obtener la hora actual del servidor.
+R: c
+E: Idempotente = ejecutarla N veces deja el estado del servidor igual que ejecutarla una. x = x + 1 cambia el estado en cada ejecución. Consultar, asignar un valor fijo u obtener la hora son idempotentes (que la hora devuelta cambie da igual: no cambia el estado).
+Fuente: 25/26 P1.
+---
+P: En una arquitectura RPC/RMI, ¿cuál es una función del stub del servidor?
+a) Serializar los argumentos de la llamada remota.
+b) Deserializar la petición y delegar la ejecución al objeto servidor.
+c) Gestionar el registro de servicios en el portmapper.
+d) Implementar la lógica de negocio de la aplicación.
+R: b
+E: El stub (o skeleton) del servidor deserializa los argumentos de la petición, invoca al método del sirviente y serializa la respuesta. Serializar los argumentos de la llamada es cosa del stub del CLIENTE; la lógica de negocio la implementa el programador en el sirviente.
+Fuente: 25/26 P1.
+---
+P: El proceso de marshalling en RPC consiste en:
+a) Convertir datos complejos del programa a un formato transmisible por red.
+b) Establecer la conexión entre cliente y servidor.
+c) Localizar el servicio remoto en el registro.
+d) Ejecutar el procedimiento remoto en el servidor.
+R: a
+E: Marshalling = serialización: convertir las estructuras de datos del programa en una secuencia de bytes para enviarla por la red (unmarshalling es lo inverso). Localizar el servicio es tarea del binder.
+Fuente: 25/26 P1.
+---
+P: ¿Cuál es la función principal del binder (registry) en RMI?
+a) Ejecutar los métodos remotos solicitados por los clientes.
+b) Permitir que los clientes localicen referencias a objetos remotos.
+c) Realizar el marshalling y unmarshalling de datos.
+d) Gestionar la seguridad y autenticación de las invocaciones.
+R: b
+E: El binder es un servicio de nombres: el servidor registra sus objetos con un nombre y el cliente obtiene a partir del nombre la referencia remota. Da transparencia de localización. El marshalling lo hacen los stubs.
+Fuente: 25/26 P1.
+---
+P: La principal ventaja de la invocación asíncrona es:
+a) El cliente no queda bloqueado esperando la respuesta del servidor.
+b) Se garantiza que la operación se ejecutará exactamente una vez.
+c) Reducen el número de bytes transmitidos por la red.
+d) Simplifican la implementación del middleware.
+R: a
+E: En la invocación asíncrona el cliente lanza la petición y sigue trabajando; recoge el resultado más tarde (polling o callback). No cambia la semántica de invocación ni el tamaño de los mensajes.
+Fuente: 25/26 P1.
+
+% ======================================================================
+% Curso 25/26 - P1R
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Por qué la ausencia de reloj global es una característica fundamental de los sistemas distribuidos?
+a) Permite una mayor seguridad en las comunicaciones.
+b) Facilita la programación de aplicaciones distribuidas.
+c) Es crítica en el diseño e implementación de cualquier algoritmo distribuido.
+d) Reduce la complejidad del diseño e implementación de algoritmos.
+R: c
+E: Sin un reloj común, los nodos no pueden ponerse de acuerdo en el orden de los eventos solo con sus marcas de tiempo; hay que coordinarse mediante mensajes (relojes lógicos, etc.). Eso complica, no simplifica, cualquier algoritmo distribuido.
+Fuente: 25/26 P1R.
+---
+P: ¿Qué entendemos por «middleware de comunicaciones» en el contexto de los sistemas distribuidos?
+a) Hardware dedicado a mejorar el rendimiento de las comunicaciones.
+b) Conjunto de protocolos de comunicación que permite la interconexión de nodos en una red.
+c) Software que proporciona servicios distribuidos facilitando la comunicación entre el usuario y el sistema.
+d) Capa intermedia que proporciona servicios a las aplicaciones distribuidas y demanda servicios de la plataforma.
+R: d
+E: Es la figura de capas de Coulouris: aplicaciones / middleware / plataforma (SO + hardware). El middleware sirve a las APLICACIONES (no al usuario, por eso c es falsa) y usa los servicios de la plataforma. No es hardware ni un mero conjunto de protocolos.
+Fuente: 25/26 P1R.
+---
+P: ¿Qué aspecto caracteriza a los sistemas basados en computación en la nube?
+a) El uso de protocolos de comunicación estándar.
+b) La capacidad de compartir recursos.
+c) La provisión de recursos y/o servicios bajo demanda.
+d) El empleo de mecanismos de seguridad avanzados.
+R: c
+E: Lo característico del cloud es la provisión elástica de recursos bajo demanda (IaaS, PaaS, SaaS). Compartir recursos o usar protocolos estándar lo hace cualquier SD.
+Fuente: 25/26 P1R.
+---
+P: ¿Cuál es la diferencia principal entre «servicio» y «servidor»?
+a) Un servicio es un componente de hardware, mientras que un servidor es un componente de software.
+b) Un servicio describe una funcionalidad, un servidor es el componente que la implementa.
+c) Un servicio es un protocolo de comunicación, mientras que un servidor es una aplicación cliente.
+d) Servicio y servidor son términos intercambiables.
+R: b
+E: Servicio: funcionalidad sobre un conjunto de recursos accesible mediante una interfaz (operaciones bien definidas). Servidor: el proceso en ejecución que implementa uno o varios servicios.
+Fuente: 25/26 P1R.
+---
+P: ¿Qué es la transparencia de fallo?
+a) La capacidad del sistema para ocultar la severidad de los fallos.
+b) La habilidad del sistema para detectar y reportar fallos a los usuarios.
+c) La capacidad del sistema para continuar operando en presencia de fallos sin que lleguen a ser advertidos.
+d) La habilidad del sistema para prevenir todos los tipos de fallos.
+R: c
+E: Toda transparencia consiste en OCULTAR algo. La de fallos oculta los fallos: el sistema sigue funcionando y el usuario no se entera. Detectar y reportar es justo lo contrario de ocultar.
+Fuente: 25/26 P1R.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿Cuál de los siguientes sistemas de codificación permite obtener mensajes de menor tamaño?
+a) XML
+b) JSON
+c) Protocol Buffers
+d) YAML
+R: c
+E: Protocol Buffers es un formato binario: no incluye nombres de campo ni marcas textuales, solo números de campo y valores codificados de forma compacta. XML, JSON y YAML son textuales.
+Fuente: 25/26 P1R.
+---
+P: Dentro del diseño de un protocolo, ¿qué componente especifica las fases de comunicación, los temporizadores, tiempos de espera, orden de mensajes y los estados válidos?
+a) La sintaxis
+b) La semántica
+c) La sincronización
+d) El marshalling
+R: c
+E: La sincronización (temporización) define CUÁNDO y en qué orden se intercambian los mensajes: fases, timeouts, estados. La sintaxis es el formato; la semántica, el significado.
+Fuente: 25/26 P1R.
+---
+P: ¿Cuál es la principal ventaja de rendimiento de usar un formato binario como Protocol Buffers frente a JSON?
+a) Reduce la latencia de red al no usar puertos TCP.
+b) Reduce significativamente el tamaño del mensaje y el tiempo de serialización/deserialización.
+c) Aumenta el tamaño del mensaje para asegurar la integridad y extensibilidad, pero lo procesa más rápido.
+d) No hay diferencia de rendimiento, solo de legibilidad y confidencialidad.
+R: b
+E: Binario = mensajes más pequeños y más rápidos de codificar/decodificar. El formato de serialización no tiene nada que ver con usar o no puertos TCP.
+Fuente: 25/26 P1R.
+---
+P: ¿Cuántas veces se realiza la serialización en un intercambio de mensajes de tipo RRA (request-reply-ack)?
+a) 2
+b) 3
+c) 4
+d) 6
+R: b
+E: Cada mensaje enviado se serializa una vez: la petición (request), la respuesta (reply) y el ack. Tres mensajes = tres serializaciones.
+Fuente: 25/26 P1R.
+---
+P: Marque todos los aspectos del diseño de un protocolo que resuelve el uso de sockets TCP:
+a) Sintaxis
+b) Semántica
+c) Secuenciación
+d) Ordenamiento de mensajes.
+e) Confiabilidad
+f) Retransmisión automática
+g) Ninguno
+R: g
+E: Criterio fijo del profesorado (sale casi todos los años): TCP es un protocolo de transporte; los aspectos del diseño del protocolo de APLICACIÓN (sintaxis, semántica y sincronización) siguen estando por diseñar. Aunque TCP ordene y retransmita a nivel de transporte, la respuesta oficial es "Ninguno".
+Fuente: 25/26 P1R (también 22/23 P1 y 24/25 P1X).
+---
+T: Tema 3 - Invocación remota
+P: Se requiere operar remotamente el mecanismo de apertura de una puerta automática. ¿Qué semántica de invocación permitiría conseguir el comportamiento deseado al mínimo coste (memoria, procesamiento y uso de red)?
+a) maybe
+b) at least once.
+c) at most once.
+d) exactly once
+R: b
+E: Abrir una puerta es idempotente: si ya está abierta, volver a abrirla no cambia nada. Por eso se puede reintentar sin filtro de duplicados ni historial (at-least-once). maybe no basta porque podría no abrirse nunca; at-most-once y exactly-once son más caras.
+Fuente: 25/26 P1R.
+---
+P: En RPC, ¿quién tiene la función de empaquetar los parámetros y construir el mensaje de petición que se envía al servidor?
+a) El stub del servidor generado automáticamente a partir de la interfaz.
+b) El stub del cliente generado automáticamente a partir de la interfaz.
+c) La capa de sockets del sistema operativo en el cliente.
+d) El programador, antes de enviarlo mediante la interfaz socket.
+R: b
+E: El stub (proxy) del cliente, generado por el compilador de interfaces a partir del IDL, serializa el identificador de la operación y los argumentos y envía la petición. El programador solo llama al método como si fuera local.
+Fuente: 25/26 P1R.
+---
+P: ¿Cuál de las siguientes afirmaciones es FALSA en relación a los sirvientes en un middleware RMI como ZeroC Ice?
+a) Varios objetos remotos pueden estar asociados a una única instancia del sirviente.
+b) Es posible crear instancias de los sirvientes en cualquier momento de la vida de un servidor RMI.
+c) Una misma clase sirviente puede implementar varias interfaces remotas (especificadas en Slice) a la vez.
+d) Todos los métodos de un sirviente deben ser métodos invocables remotamente.
+R: d
+E: Un sirviente es un objeto normal del lenguaje: puede tener métodos auxiliares que no estén en la interfaz Slice (y que por tanto no son invocables remotamente). Las otras tres son ciertas (p. ej., un sirviente puede registrarse con varias identidades en el adaptador).
+Fuente: 25/26 P1R.
+---
+P: ¿Cuál de los siguientes fue un aspecto clave en el diseño del modelo de programación de RPC?
+a) El retardo de cualquier llamada RPC debe ser predecible y estar acotado.
+b) La RPC debe imitar el modelo de programación de una llamada a procedimiento convencional.
+c) El coste computacional debe ser menor o igual al de una llamada a procedimiento convencional.
+d) Evitar a toda costa el uso de lenguajes intermedios para definición de la interfaz de servicio remota.
+R: b
+E: Birrell y Nelson: la RPC debe parecerse lo más posible a una llamada local. Su coste es siempre MAYOR que el de una llamada local, el retardo no se puede acotar en una red asíncrona y se usan IDL para definir las interfaces.
+Fuente: 25/26 P1R.
+---
+P: Selecciona la afirmación FALSA en lo que respecta a invocación remota:
+a) REST es considerado RPC.
+b) El servicio Portmapper realiza la vinculación entre cliente y servidor.
+c) La semántica Maybe no requiere ni de ACK ni de filtro de duplicados.
+d) Para realizar el filtrado de duplicados es requerido hacer uso de un ID.
+R: a
+E: REST no es RPC: se basa en recursos identificados por URI y en un conjunto fijo de operaciones (métodos HTTP), no en invocar procedimientos arbitrarios. El portmapper es el binder de ONC RPC; maybe no usa ningún mecanismo de fiabilidad; y para filtrar duplicados hace falta un identificador de petición.
+Fuente: 25/26 P1R.
+
+% ======================================================================
+% Curso 25/26 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Señala cuál de las siguientes afirmaciones sobre sistemas distribuidos es FALSA:
+a) Un sistema distribuido consiste en un conjunto de recursos de cómputo físicamente distribuido que se comunica por paso de mensajes.
+b) Un sistema distribuido es ejecutado sobre un conjunto de aplicaciones distribuidas.
+c) Una o varias aplicaciones distribuidas pueden ser ejecutadas sobre un sistema distribuido.
+d) Las principales características de un sistema distribuido son la ejecución concurrente de procesos, la ausencia de reloj global y los fallos independientes.
+R: b
+E: Es al revés: las aplicaciones distribuidas se ejecutan SOBRE el sistema distribuido (que es la infraestructura: nodos, red, middleware), y varias aplicaciones pueden compartir el mismo SD.
+Fuente: 25/26 P1X.
+---
+P: Si desarrollo una aplicación y la despliego en un servidor Amazon EC2, ¿qué tipo de servicio estoy usando?
+a) Software as a Service.
+b) Platform as a Service.
+c) Infrastructure as a Service.
+d) Ninguna de las respuestas es correcta.
+R: c
+E: EC2 te da máquinas virtuales que gestionas tú (SO, software…): eso es IaaS. PaaS sería algo como Heroku (solo subes el código) y SaaS una aplicación ya hecha (Microsoft 365, Gmail).
+Fuente: 25/26 P1X.
+---
+P: ¿Qué tipo de transparencia proporciona principalmente un editor de texto colaborativo entre personas?
+a) Fallos.
+b) Localización.
+c) Movilidad.
+d) Concurrencia.
+R: d
+E: Varias personas acceden y modifican el mismo documento a la vez sin interferir entre ellas: transparencia de concurrencia.
+Fuente: 25/26 P1X (también 24/25 P1).
+---
+P: Indica cuál de las siguientes características es proporcionada por un middleware de comunicaciones:
+a) Permite al programador centrarse en los aspectos funcionales de la aplicación.
+b) Provee una definición de interfaces comunes que permita mapear diferentes representaciones de datos en distintos lenguajes de programación.
+c) Provee de referencias universales para localizar recursos.
+d) Todas las respuestas son correctas.
+R: d
+E: El middleware enmascara la heterogeneidad con referencias universales, una representación canónica de datos y la definición de interfaces comunes (language bindings), y así el programador se centra en los requisitos funcionales.
+Fuente: 25/26 P1X.
+---
+P: En los sistemas distribuidos, ¿qué implica el término «mensajería asíncrona»?
+a) La mensajería se realiza de manera síncrona, es decir, todos los nodos deben estar activos simultáneamente.
+b) La mensajería se realiza de forma síncrona, lo que significa que los nodos deben esperar respuestas inmediatas.
+c) La mensajería se realiza de manera asíncrona, lo que significa que los nodos pueden enviar mensajes sin esperar una respuesta inmediata y continuar con otras tareas.
+d) La mensajería asíncrona no se utiliza en sistemas distribuidos.
+R: c
+E: Asíncrona = el emisor envía y continúa sin bloquearse esperando la respuesta. a) y b) describen comunicación síncrona.
+Fuente: 25/26 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿Cuál es la principal ventaja de JSON frente a Protocol Buffers como formato de serialización?
+a) Mayor eficiencia en la serialización y menor tamaño de mensaje.
+b) Mejor soporte para enumeraciones y tipos complejos.
+c) Es legible por humanos, lo que facilita la depuración y el desarrollo.
+d) Está mejor soportado en lenguajes de programación de bajo nivel y microcontroladores.
+R: c
+E: JSON es texto legible, fácil de depurar. En tamaño, eficiencia y tipos (enums, mensajes anidados) gana Protocol Buffers.
+Fuente: 25/26 P1X.
+---
+P: ¿Cuál es el propósito principal de cualquier protocolo en sistemas distribuidos?
+a) Mejorar el rendimiento del sistema.
+b) Coordinar procesos.
+c) Reducir el costo de implementación.
+d) Aumentar la capacidad de almacenamiento.
+R: b
+E: Un protocolo son las reglas (sintaxis, semántica, sincronización) que permiten a procesos distintos intercambiar mensajes y coordinarse.
+Fuente: 25/26 P1X.
+---
+P: ¿Qué campo es habitual incluir en los mensajes de respuesta de un protocolo para informar al cliente del resultado de la operación solicitada incluso si no hay valor de retorno?
+a) Identificador de mensaje.
+b) Marca de tiempo.
+c) Código de error o estado.
+d) Longitud del payload de la petición original.
+R: c
+E: Aunque la operación no devuelva nada, el cliente necesita saber si fue bien o qué error hubo: un código de estado (OK / código de error). El identificador de mensaje sirve para emparejar respuesta y petición, no para informar del resultado.
+Fuente: 25/26 P1X.
+---
+P: En Google Protocol Buffers, ¿para qué sirve la palabra clave oneof?
+a) Para definir campos obligatorios en protobuf v3, como sustituto de required de v2.
+b) Para indicar que un campo puede actuar como alias de otro campo del mismo mensaje.
+c) Para que como máximo un campo de los definidos tenga valor a la vez.
+d) Para permitir que un campo acepte valores de distintos tipos simultáneamente.
+R: c
+E: oneof agrupa varios campos de los que como mucho uno puede tener valor (asignar uno borra los demás). Ejemplo: oneof result { int64 value = 1; string error = 2; }. No tiene nada que ver con la obligatoriedad (en proto3 no existe required).
+Fuente: 25/26 P1X.
+---
+P: Un sistema de monitorización de una planta industrial necesita reaccionar de forma confiable y lo antes posible cuando el valor de un sensor supera un umbral. ¿Qué esquema de comunicación resulta más adecuado?
+a) Push: el sensor avisa al servidor en cuanto detecta el cambio.
+b) Pull: el servidor consulta periódicamente al sensor para obtener el valor actual.
+c) Request-Reply síncrono: el servidor bloquea esperando la respuesta del sensor.
+d) Multicast: el sensor difunde el valor al grupo de suscriptores.
+R: a
+E: Con push el aviso sale en cuanto ocurre el evento. Con pull el retardo depende del periodo de consulta (y se gastan mensajes inútiles). Multicast no aporta nada (el destinatario es uno) y no es confiable por sí mismo.
+Fuente: 25/26 P1X.
+---
+T: Tema 3 - Invocación remota
+P: En un sistema distribuido donde se ejecutan operaciones que NO son idempotentes y la red es propensa a la pérdida de mensajes, ¿qué semántica de llamada debe implementarse para garantizar un comportamiento correcto al menor coste?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) exactly-once
+R: c
+E: Si la operación no es idempotente no puede ejecutarse dos veces, así que at-least-once no vale. at-most-once (reintentos + filtro de duplicados + retransmisión del resultado guardado) lo garantiza. exactly-once es posible pero mucho más cara.
+Fuente: 25/26 P1X.
+---
+P: Un cliente invoca el método write("hola") sobre un objeto remoto llamado printer1. ¿Cuál de las siguientes secuencias describe correctamente el flujo completo de los componentes desde el cliente hasta la ejecución real en el servidor?
+a) Cliente -> Object Adapter -> Red -> Proxy -> Server Stub -> Servant.
+b) Cliente -> Proxy (Client stub) -> Red -> Object Adapter -> Server Stub -> Servant.
+c) Cliente -> Server Stub -> Red -> Object Adapter -> Proxy -> Servant.
+d) Cliente -> Servant -> Red -> Object Adapter -> Client Stub -> Proxy.
+R: b
+E: El cliente llama al proxy (stub de cliente), que serializa y envía por la red. En el servidor, el adaptador de objetos recibe la petición y la entrega al esqueleto (server stub), que deserializa e invoca al sirviente.
+Fuente: 25/26 P1X.
+---
+P: En el contexto de ONC RPC, ¿cuál es el comportamiento correcto del Port Mapper (Binder) durante el proceso de Dynamic Binding?
+a) El cliente envía la petición directamente al puerto 111, y el Port Mapper ejecuta el servicio remoto devolviendo el resultado al cliente.
+b) El servidor se registra en el cliente, indicando su número de programa y versión, para que el cliente pueda realizar invocaciones mediante broadcast.
+c) El servidor registra su número de programa, versión y puerto en el Port Mapper (puerto 111); posteriormente, el cliente consulta al Port Mapper usando el programa y versión para obtener el puerto TCP/UDP del servidor.
+d) El Port Mapper asigna dinámicamente un número de versión al cliente para que este pueda compilar los stubs utilizando la herramienta rpcgen.
+R: c
+E: El portmapper (puerto 111) solo hace de binder: guarda (programa, versión) → puerto. El servidor se registra al arrancar y el cliente pregunta el puerto antes de invocar. No ejecuta nada.
+Fuente: 25/26 P1X.
+---
+P: ¿Qué problema específico se desencadena en un sistema RPC si el proceso cliente falla de forma crítica justo después de haber enviado satisfactoriamente el mensaje de solicitud por la red?
+a) El servidor detecta inmediatamente la caída del cliente consultando al Port Mapper y cancela la ejecución en curso para ahorrar recursos.
+b) Se produce el fenómeno de «computación huérfana» (orphan computing), donde el servidor desperdicia CPU procesando la petición, y el posterior reinicio del cliente puede producir incoherencias en el sistema.
+c) El mensaje se transforma en un lost request y el cliente, al reiniciar, utiliza automáticamente la semántica maybe para recuperar el estado anterior.
+d) Se genera un interbloqueo (deadlock) en el Object Adapter del servidor que detiene todo el sistema hasta que expira el timeout de la conexión TCP.
+R: b
+E: El servidor sigue ejecutando una petición cuyo cliente ya no existe: computación huérfana. Gasta recursos y, si el cliente reinicia y repite la petición, puede haber incoherencias. El servidor no tiene forma de enterarse de la caída del cliente.
+Fuente: 25/26 P1X.
+---
+P: En programación asíncrona con RMI, ¿cuál es la diferencia clave entre la Invocación Asíncrona de Métodos (AMI) y el Despacho Asíncrono de Métodos (AMD), y qué mecanismo utiliza el cliente para manejar la respuesta mediante un callback?
+a) AMI afecta al servidor limitando los hilos, y AMD afecta al cliente; el callback es un mecanismo de tipo pull donde el cliente consulta el resultado con .get().
+b) Ambos mecanismos ocurren exclusivamente en el servidor; el callback utiliza un bucle while not asyncresult.ready() para hacer polling.
+c) AMI desacopla la invocación de la recolección del resultado en el cliente, mientras que AMD evita que el servidor necesite bloquear un hilo por cada petición concurrente; proveer un callback es un mecanismo de tipo push.
+d) AMI obliga al servidor a compilar los stubs de forma síncrona y AMD obliga al cliente a esperar bloqueado; el callback es por defecto una petición blocking.
+R: c
+E: AMI es del lado CLIENTE: invocar sin bloquearse y recoger el resultado después. AMD es del lado SERVIDOR: el sirviente puede terminar la respuesta más tarde sin tener un hilo bloqueado por petición. Con un callback el resultado se te entrega (push); consultar con .get() o ready() es pull/polling.
+Fuente: 25/26 P1X.
+
+% ======================================================================
+% Curso 24/25 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Indica cuál de las siguientes NO es una falacia de los sistemas distribuidos:
+a) El coste de transporte es cero.
+b) La red es heterogénea.
+c) La topología de la red nunca cambia.
+d) La red es segura.
+R: b
+E: Las 8 falacias: la red es fiable, la latencia es cero, el ancho de banda es infinito, la red es segura, la topología no cambia, hay un único administrador, el coste de transporte es cero y la red es HOMOGÉNEA. Que la red es heterogénea es la realidad, no una falacia.
+Fuente: 24/25 P1.
+---
+P: ¿Cuál es la principal característica que diferencia a un sistema distribuido y a un sistema paralelo?
+a) Los sistemas distribuidos se centran en compartir recursos.
+b) Los sistemas distribuidos se centran en realizar tareas con alta eficiencia.
+c) Los sistemas distribuidos implican más nodos, por encima del orden de 1000.
+d) Ninguna de las respuestas anteriores es correcta.
+R: a
+E: Lo que los distingue es el objetivo: un SD busca compartir recursos (en redes heterogéneas); un sistema paralelo busca rendimiento (speedup) en máquinas dedicadas. El número de nodos no los distingue.
+Fuente: 24/25 P1.
+---
+P: Indica cuál de los siguientes es un paradigma de comunicación válido para un sistema distribuido:
+a) Comunicación interproceso por medio de sockets.
+b) Llamada a procedimiento remoto.
+c) Comunicación indirecta.
+d) Todas las respuestas son correctas.
+R: d
+E: Los tres son paradigmas de comunicación: IPC de bajo nivel (sockets, paso de mensajes), invocación remota (RPC/RMI) y comunicación indirecta (publicación-suscripción, colas…).
+Fuente: 24/25 P1.
+---
+P: Imagina que estás desarrollando una aplicación cliente en un sistema distribuido asíncrono. En el sistema hay definido un tiempo de timeout para el reenvío de peticiones. Tu cliente ha cumplido dicho timeout. ¿Cuál de estas conclusiones NO es correcta?
+a) Dado que el tiempo de timeout ha concluido, se puede asegurar que el mensaje no ha llegado en el tiempo máximo estimado y por lo tanto ha ocurrido algún fallo.
+b) Es posible que la respuesta esté tardando más que el tiempo de timeout en llegar al cliente.
+c) El mensaje de petición se ha podido perder debido a un fallo del canal de comunicación.
+d) Ha podido ocurrir un error arbitrario en el sistema.
+R: a
+E: En un sistema ASÍNCRONO no hay límites de tiempo conocidos: que expire el timeout no permite asegurar nada. Puede haberse perdido el mensaje, haber fallado algo… o simplemente la respuesta está tardando más.
+Fuente: 24/25 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿Cuál de las siguientes NO es una característica de Protocol Buffers?
+a) Permite cifrar multitud de tipos de dato.
+b) Se encarga de la serialización de las estructuras del lenguaje de programación a secuencias binarias y viceversa.
+c) Permite definir tipos como bool, string, int32 o int64.
+d) Soporta enumeraciones y anidaciones.
+R: a
+E: Protocol Buffers serializa, no cifra. Tampoco añade CRC ni marcas de tiempo. Sí define tipos escalares, enumeraciones y mensajes anidados.
+Fuente: 24/25 P1.
+---
+P: ¿Qué característica se consigue con el campo «identificador de mensaje» que incorporan muchos protocolos?
+a) Eliminación de duplicados
+b) Control de flujo
+c) Serialización del payload
+d) Streaming de datos
+R: a
+E: Un identificador único por mensaje permite detectar duplicados (si llega otra vez el mismo id, se descarta), emparejar respuesta con petición y ordenar mensajes.
+Fuente: 24/25 P1.
+---
+P: Al diseñar un protocolo tenemos que incluir un campo para enviar una secuencia de bytes de tamaño variable. Consideramos dos alternativas:
+1. Colocar un 0 después para indicar el final.
+2. Colocar primero un campo de 1 byte para indicar el tamaño de la secuencia.
+¿Cuál de los siguientes NO ES una ventaja de la segunda opción?
+a) Es más seguro.
+b) Permite enviar secuencias de cualquier longitud.
+c) Permite enviar un 0 como parte de la secuencia de bytes.
+d) Permite determinar a priori el tamaño máximo que puede ocupar el mensaje completo.
+R: b
+E: Con 1 byte de longitud la secuencia tiene como máximo 255 bytes, así que NO admite cualquier longitud (el terminador sí). Las demás son ventajas: el 0 deja de ser especial, se conoce el tamaño máximo y se evitan lecturas sin límite (más seguro).
+Fuente: 24/25 P1.
+---
+P: En la descripción de un protocolo, ¿qué se define cuando se indica el patrón de intercambio de mensajes?
+a) La sintaxis
+b) La semántica
+c) La temporización
+d) La sintaxis, la semántica y la temporización
+R: c
+E: El patrón de intercambio (qué mensaje va después de cuál, quién responde a qué) es la temporización o sincronización.
+Fuente: 24/25 P1.
+---
+T: Tema 3 - Invocación remota
+P: Elija la opción más adecuada respecto a la afirmación: «En la práctica, RPC se suele implementar sobre sockets»:
+a) Es verdadera.
+b) Falso, RMI sí se implementa sobre sockets, pero no RPC.
+c) Falso, socket y RPC son primitivas de comunicación equivalentes.
+d) Falso, RPC, RMI, comunicación indirecta y sockets pertenecen todos a la capa superior del middleware.
+R: a
+E: RPC y RMI son la capa superior del middleware y se construyen sobre las primitivas IPC de la capa inferior, es decir, sobre sockets (UDP o TCP). Los sockets son de la capa inferior, no de la superior.
+Fuente: 24/25 P1.
+---
+P: En el proceso de desarrollo de una aplicación distribuida mediante gRPC, ¿qué componentes se generan de forma automática? (marca 2)
+a) Interfaz del servicio.
+b) Delegados en el lado del cliente.
+c) Esqueleto del servidor.
+d) Localizador de objetos.
+e) Sirvientes.
+R: b, c
+E: A partir del .proto (la interfaz, que escribe el programador), protoc genera el stub/delegado del cliente y el esqueleto (clase base) del servidor. Los sirvientes (la implementación) los escribe el programador.
+Fuente: 24/25 P1.
+---
+P: ¿Cuál de las semánticas RPC requiere menor uso de recursos (número y tamaño de mensajes, ancho de banda, memoria, etc.)?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) todas requieren los mismos recursos
+R: a
+E: maybe no usa ninguna medida de tolerancia a fallos: ni reintentos, ni filtro de duplicados, ni historial de respuestas. Es la más barata (y la menos fiable).
+Fuente: 24/25 P1.
+---
+P: Cuando una operación RMI es idempotente, el servidor...
+a) ... debe ejecutarla exactamente una vez o aparecerán efectos indeseados.
+b) ... debe rechazar ejecuciones sucesivas para esa operación.
+c) ... efectuará la operación siempre sobre el mismo objeto aunque la referencia cambie.
+d) ... no necesita realizar control de duplicados.
+R: d
+E: Si ejecutarla varias veces da el mismo estado que ejecutarla una, los duplicados son inofensivos: no hace falta filtrarlos. a) describe justo las operaciones NO idempotentes.
+Fuente: 24/25 P1 y 24/25 P1X.
+---
+P: ¿Cuál es la funcionalidad más importante que proporciona el adaptador de objetos en un middleware RMI?
+a) Invoca instancias locales (sirvientes) a partir de los mensajes procedentes de los clientes.
+b) Permite que un servidor se pueda vincular a múltiples puertos utilizando varios protocolos de transporte distintos.
+c) Permite al cliente descubrir automáticamente los endpoints de los objetos remotos disponibles en la misma red local.
+d) Crea los proxies necesarios para la comunicación remota desde los stubs del lado del cliente.
+R: a
+E: El adaptador de objetos recibe las peticiones de los endpoints que escucha, localiza el sirviente correspondiente a la identidad del objeto y le despacha la invocación. Tener varios endpoints es posible, pero no es su función principal.
+Fuente: 24/25 P1.
+
+% ======================================================================
+% Curso 24/25 - P1R
+% ======================================================================
+---
+T: Tema 2 - Diseño de protocolos
+P: [Bloque A] Debe diseñar un protocolo de servicio cliente/servidor que proporcione tres tipos de operación: leer, incrementar y resetear el número de versión de un fichero.
+¿Cuál de las siguientes opciones define de manera más eficiente (mínimo número de mensajes necesario con el mínimo payload) la sintaxis del mensaje de petición para cualquiera de las operaciones del conjunto? Considere que x es el número exacto de caracteres del nombre del fichero.
+a) Id. Operación (1 byte) + longitud nombre fichero (2 bytes) + nombre fichero (x bytes) + carácter FIN (1 byte)
+b) Id. Operación (1 byte) + longitud nombre fichero (2 bytes) + nombre fichero (x bytes)
+c) Id. Operación (1 byte) + nombre fichero (x bytes) + carácter FIN (1 byte)
+d) Id. Operación (1 byte) + nombre fichero (512 bytes) + carácter FIN (1 byte)
+R: c
+E: Con un carácter de fin basta 1 byte para delimitar el nombre (1 + x + 1), menos que un campo de longitud de 2 bytes (1 + 2 + x). a) usa ambos mecanismos (redundante) y d) reserva siempre 512 bytes.
+Fuente: 24/25 P1R (bloque A).
+---
+P: [Bloque A] Protocolo cliente/servidor para leer, incrementar y resetear el número de versión de un fichero. Suponga que también se le solicita la posibilidad de ordenar los mensajes. ¿Qué campo debería añadir a los mensajes para soportar dicha característica?
+a) CRC
+b) Tamaño del payload
+c) Checksum
+d) Identificador de mensaje
+R: d
+E: Un identificador (secuencial) de mensaje permite ordenar y detectar duplicados. CRC y checksum solo detectan errores de transmisión.
+Fuente: 24/25 P1R (bloque A).
+---
+P: [Bloque A] Protocolo cliente/servidor para leer, incrementar y resetear el número de versión de un fichero. ¿Cuál de las siguientes opciones es la más adecuada para representar los mensajes de petición del protocolo utilizando Google Protocol Buffers versión 3?
+a)
+```
+enum Operation {READ=0; INC=1; RESET=2; UNK=3;}
+Operation VersionOp = 1;
+string Filename = 2;
+string EndChar = 3;
+}
+```
+b)
+```
+enum Operation {READ=0; INC=1; RESET=2; UNK=3;}
+required Operation VersionOp = 1;
+required string Filename = 2;
+optional int Version = 3;
+}
+```
+c)
+```
+enum Operation {READ=0; INC=1; RESET=2; UNK=3;}
+Operation VersionOp = 1;
+string Filename = 2;
+}
+```
+d)
+```
+enum Operation {READ=0; INC=1; RESET=2; UNK=3;}
+required Operation VersionOp = 1;
+required int LenFilename = 2;
+required string Filename = 3;
+}
+```
+R: c
+E: En proto3 no existe "required" (es de proto2), así que b) y d) no valen. En protobuf no hace falta carácter de fin ni campo de longitud para un string: la propia codificación ya delimita los campos, por eso a) sobra el EndChar y d) el LenFilename. c) es lo mínimo necesario.
+Fuente: 24/25 P1R (bloque A).
+---
+T: Tema 1 - Introducción
+P: ¿Cuál de las siguientes NO es una característica principal de un sistema distribuido?
+a) Ejecución concurrente de procesos.
+b) Ausencia de un reloj global.
+c) Fallos independientes.
+d) No existe un coordinador central.
+R: d
+E: Las tres características canónicas son concurrencia, ausencia de reloj global y fallos independientes. La ausencia de coordinador central no es una de ellas.
+Fuente: 24/25 P1R.
+---
+P: ¿Cuáles son las 3 características principales de todo sistema distribuido?
+a) Ausencia de reloj global, concurrencia y fallos independientes.
+b) Ausencia de reloj global, red de comunicaciones y memoria compartida.
+c) Ausencia de reloj global, concurrencia y memoria compartida.
+d) Sistema operativo, red de comunicaciones y middleware de tiempo real.
+R: a
+E: Concurrencia, ausencia de reloj global y fallos independientes. En un SD no hay memoria compartida: la comunicación es por paso de mensajes.
+Fuente: 24/25 P1R y 22/23 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: En la descripción de un protocolo, ¿qué se define cuando se indica el significado de cada campo de un paquete en una RFC?
+a) La semántica
+b) La temporización
+c) La sintaxis
+d) Ninguna de las otras
+R: a
+E: Significado = semántica. La sintaxis sería el formato (campos, tamaños) y la temporización el orden de intercambio.
+Fuente: 24/25 P1R.
+---
+T: Tema 1 - Introducción
+P: Señala la afirmación correcta respecto a las aplicaciones y sistemas distribuidos:
+a) El sistema distribuido no tiene en cuenta las características del hardware
+b) La aplicación distribuida se puede considerar el gestor de recursos del sistema distribuido
+c) La aplicación distribuida se ejecuta sobre el sistema distribuido, varias aplicaciones distribuidas se pueden desplegar sobre un mismo sistema distribuido
+d) La aplicación distribuida no maneja la lógica de negocio, únicamente gestiona los nodos distribuidos
+R: c
+E: El SD es la infraestructura (nodos, red, middleware) y la aplicación distribuida se ejecuta encima; varias aplicaciones pueden compartir un mismo SD. La aplicación implementa la lógica de negocio; gestionar los recursos es cosa del SD.
+Fuente: 24/25 P1R.
+---
+P: ¿Qué modelo de programación es más adecuado para aplicaciones orientadas a eventos en un sistema distribuido?
+a) RPC
+b) RMI
+c) Comunicación indirecta
+d) Sockets
+R: c
+E: Los eventos encajan con publicación-suscripción: el productor publica sin conocer a los consumidores, que se suscriben a lo que les interesa. Eso es comunicación indirecta.
+Fuente: 24/25 P1R.
+---
+P: ¿Qué modelo de comunicación permite de forma más natural implementar la diseminación de eventos a gran número de usuarios?
+a) Comunicación indirecta
+b) Comunicación directa
+c) Algoritmo de Cristian
+d) Enrutado de eventos
+R: a
+E: Con comunicación indirecta (publicación-suscripción) el emisor publica una vez y el intermediario lo distribuye a todos los suscriptores, sin conocerlos. El algoritmo de Cristian es de sincronización de relojes.
+Fuente: 24/25 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿Qué beneficios aportan los protocolos abiertos y públicos en los sistemas distribuidos?
+a) Incrementan la seguridad de las redes, la eficacia y la eficiencia de la entrega de mensajes.
+b) Desacoplan las implementaciones, proporcionan transparencia y aseguran la interoperabilidad.
+c) Reducen la latencia y el ancho de banda necesario en comunicaciones en red.
+d) Facilitan la replicación y la redundancia.
+R: b
+E: Si el protocolo es público, cualquiera puede implementar un cliente o servidor compatible (interoperabilidad) sin depender de una implementación concreta. Que sea abierto no lo hace más rápido ni más seguro.
+Fuente: 24/25 P1R.
+---
+P: Se encuentra diseñando el protocolo binario para dar soporte a un middleware de tipo RMI con transporte TCP. ¿Qué campo añade para evitar duplicados?
+a) Marca de tiempo.
+b) Checksum de los datos del mensaje.
+c) Identificador del mensaje.
+d) No es necesario, TCP garantiza la ausencia de duplicados.
+R: c
+E: TCP evita duplicados dentro de una conexión, pero si la conexión se cae y el cliente reintenta (otra conexión), el servidor puede recibir la misma petición dos veces. El identificador de mensaje es lo que permite al middleware detectarlo. Es la respuesta oficial aunque se use TCP.
+Fuente: 24/25 P1R.
+---
+T: Tema 1 - Introducción
+P: Indica cuál de las siguientes opciones NO es considerada una primitiva de comunicación interprocesos:
+a) Sockets
+b) Paso de mensajes
+c) Comunicación indirecta
+d) Multicast
+R: c
+E: La capa inferior del middleware (primitivas IPC) son sockets, paso de mensajes y multicast. La comunicación indirecta, igual que la invocación remota, es un paradigma de la capa SUPERIOR.
+Fuente: 24/25 P1R.
+---
+T: Tema 3 - Invocación remota
+P: Imagina que como parte de un proyecto estás realizando un despliegue de un conjunto de sensores de distinta índole (temperatura, presión, humedad, etc.). Estos sensores deben comunicar sus valores cada 5 minutos a un servidor para su almacenamiento. ¿Cuál de los siguientes protocolos es el más adecuado para el intercambio de la información?
+a) Request
+b) Request-Reply
+c) Request-Reply-Ack
+d) El protocolo de intercambio es indiferente en este caso
+R: a
+E: El sensor solo envía datos; no necesita respuesta, y perder una lectura no es grave porque en 5 minutos llega otra. El estilo R (solo petición) es suficiente y el más barato.
+Fuente: 24/25 P1R.
+---
+P: ¿Cuál de las siguientes semánticas de llamadas RPC dispone de filtro de duplicados?
+a) Maybe
+b) At-least-once
+c) At-most-once
+d) At-least-once y At-most-once
+R: c
+E: maybe: sin reintentos. at-least-once: reintenta pero NO filtra (re-ejecuta). at-most-once: reintenta, filtra duplicados y retransmite el resultado guardado.
+Fuente: 24/25 P1R.
+---
+P: Señala cuál de las siguientes afirmaciones se ajusta más al concepto de sirviente.
+a) Es el objeto local que sustituye al objeto remoto.
+b) Es el objeto remoto que ejecuta la lógica de negocio.
+c) Fragmento de código que realiza los procesos de marshalling y unmarshalling tanto de los parámetros como de los valores de retorno.
+d) Interfaz de comunicación que permite la interacción con un objeto remoto.
+R: b
+E: El sirviente es la instancia (en el servidor) que implementa realmente la interfaz y ejecuta los métodos. a) es el proxy; c) son los stubs/esqueletos; d) es la interfaz.
+Fuente: 24/25 P1R.
+---
+P: Considerando que estás usando el middleware de comunicaciones ZeroC Ice, ¿cuál de las siguientes opciones NO es estrictamente necesaria para contactar un objeto remoto?
+a) Protocolo
+b) Host
+c) Puerto
+d) Codificación
+R: d
+E: Un proxy Ice tiene la forma "identidad -t:tcp -h host -p puerto": el endpoint necesita protocolo, host y puerto. La codificación (encoding) tiene un valor por defecto y no hay que indicarla.
+Fuente: 24/25 P1R.
+
+% ======================================================================
+% Curso 24/25 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Cuál de las siguientes NO es una cualidad de los sistemas distribuidos respecto a los centralizados?
+a) Mejoran la disponibilidad.
+b) Escalan más fácilmente.
+c) Soportan mejor la heterogeneidad.
+d) Son más simples
+R: d
+E: Un SD nunca es más simple que uno centralizado: hay que lidiar con fallos parciales, concurrencia, ausencia de reloj global, red… Las otras tres sí son ventajas.
+Fuente: 24/25 P1X.
+---
+P: En sistemas distribuidos, ¿cuál de los siguientes NO es un tipo de fallo?
+a) Omisión
+b) Bizantino
+c) Crash
+d) De datos
+R: d
+E: El modelo de fallos distingue fallos por omisión (incluido el crash de un proceso), arbitrarios o bizantinos y de temporización. "De datos" no es una categoría.
+Fuente: 24/25 P1X.
+---
+P: Señala la afirmación correcta:
+a) RPC es un protocolo de comunicación basado en colas de mensajes.
+b) RMI es un protocolo de comunicaciones indirectas basado en el paradigma de orientación a objetos.
+c) Los sockets son un mecanismo de comunicación interproceso.
+d) Ninguna es correcta.
+R: c
+E: Los sockets son la primitiva IPC básica. RPC no usa colas de mensajes (eso es comunicación indirecta) y RMI es comunicación DIRECTA (invocación remota), no indirecta.
+Fuente: 24/25 P1X.
+---
+P: Señala la afirmación correcta:
+a) En un sistema distribuido asíncrono la única forma de sincronización posible se da mediante la comunicación entre procesos.
+b) En un sistema síncrono no existe la posibilidad de sincronización entre procesos.
+c) En un sistema distribuido únicamente podemos asegurar el tiempo mínimo por mensaje.
+d) La mayor parte de los sistemas distribuidos son síncronos.
+R: a
+E: Sin límites temporales ni reloj global, la única forma de coordinarse es intercambiar mensajes. En la práctica la mayoría de SD son asíncronos, y en uno síncrono sí hay cotas conocidas (también máximas).
+Fuente: 24/25 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: Se necesita un sencillo protocolo basado en Google Protocol Buffers para que ciertos sensores informen de la carga de su batería y la calidad de recepción de señal. Enviarán un mensaje cada minuto. ¿Cuál crees que es el formato más adecuado?
+a)
+```
+message SensorReport {
+  int32 sensor_id = 1;
+  int32 battery = 2;
+  int32 signal = 3;
+}
+```
+b)
+```
+message SensorData {
+  string sensor_id = 1;
+  float battery_level = 2;
+  bool signal_quality = 3;
+}
+```
+c)
+```
+message SensorReport {
+  int64 id = 1;
+  string status = 3;
+}
+```
+d)
+```
+struct SensorReport {
+  int id;
+  int battery;
+  int signal;
+}
+```
+R: a
+E: a) identifica el sensor y envía batería y señal con enteros compactos. b) usa un string para el id (más grande) y un bool para la calidad de la señal (pierde información). c) mete todo en un string sin estructura. d) es un struct de C, no sintaxis de Protocol Buffers (no hay message ni números de campo).
+Fuente: 24/25 P1X.
+---
+P: ¿Qué funcionalidad proporciona el campo CRC o checksum que incluyen muchos protocolos?
+a) Confiabilidad
+b) Detección de errores
+c) Eliminación de duplicados
+d) Entramado básico
+R: b
+E: CRC/checksum solo DETECTA si el mensaje se ha corrompido; no lo corrige ni lo retransmite, así que por sí solo no da confiabilidad. Los duplicados se eliminan con un identificador de mensaje.
+Fuente: 24/25 P1X.
+---
+P: ¿Cuál de los siguientes NO es un campo de cabecera de protocolo?
+a) La longitud del payload
+b) CRC
+c) Payload
+d) Tipo de protocolo
+R: c
+E: La cabecera son los metadatos (tipo, longitud, CRC, id…); el payload es el contenido útil que va detrás de la cabecera.
+Fuente: 24/25 P1X.
+---
+T: Tema 3 - Invocación remota
+P: ¿Qué características de la orientación a objetos permite aprovechar RMI?
+a) Herencia de interfaces.
+b) Paso de referencias como argumentos.
+c) Herramientas y patrones de diseño.
+d) Todas las anteriores
+R: d
+E: RMI extiende RPC al modelo de objetos: interfaces que heredan, referencias a objetos remotos que se pueden pasar como argumentos o devolver, excepciones, y se pueden usar los patrones y herramientas de la OO.
+Fuente: 24/25 P1X.
+---
+P: Haciendo uso de una semántica de llamadas maybe, ¿cuál de las siguientes medidas de tolerancia a fallos debe ser implementada?
+a) Reintento de solicitud.
+b) Filtro de duplicados.
+c) Retransmisión del resultado.
+d) Ninguna de las anteriores.
+R: d
+E: maybe es la semántica sin ninguna medida de tolerancia a fallos: la operación se ejecuta 0 o 1 veces y el cliente no sabe cuál.
+Fuente: 24/25 P1X.
+---
+P: Señala cuál de las siguientes afirmaciones es verdadera con respecto a los objetos remotos:
+a) Los objetos remotos actúan como clientes.
+b) Si un proceso invoca un objeto remoto, aunque esté localizado en otro proceso local, se considera llamada remota.
+c) Al ser objetos remotos, muchos de los paradigmas de orientación a objetos como la herencia y las excepciones no pueden ser aplicados.
+d) No se pueden realizar invocaciones asíncronas a objetos remotos.
+R: b
+E: "Remoto" significa en otro proceso (otro espacio de direcciones), aunque esté en la misma máquina: la invocación pasa igualmente por proxy, serialización y red (o loopback). Los objetos remotos son servidores, admiten herencia y excepciones e invocación asíncrona (AMI).
+Fuente: 24/25 P1X.
+---
+P: ¿Qué proporciona RRA que no proporcionan los otros estilos de intercambio?
+a) Fiabilidad
+b) Transparencia
+c) Retransmisión de resultados.
+d) Concurrencia a nivel de procesador
+R: c
+E: En RRA el servidor guarda las respuestas en un historial y puede retransmitirlas sin re-ejecutar la operación; el ACK le dice cuándo puede borrarlas. Fiabilidad también la puede dar RR, así que no es lo exclusivo de RRA.
+Fuente: 24/25 P1X.
+
+% ======================================================================
+% Curso 23/24 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: En un sistema distribuido, ¿cuál es la diferencia entre la coherencia de datos y la consistencia de datos?
+a) La coherencia se refiere a la disponibilidad de datos, mientras que la consistencia se refiere a la precisión de los datos.
+b) La coherencia se refiere a que los datos en un nodo reflejan siempre la última escritura, mientras que la consistencia se refiere a que todos los nodos ven los mismos datos en el mismo orden.
+c) La coherencia se refiere a la replicación de datos, mientras que la consistencia se refiere a la fragmentación de datos.
+d) La coherencia y la consistencia son términos intercambiables.
+R: b
+E: Definición oficial: coherencia = una lectura en un nodo devuelve la última escritura sobre ese dato; consistencia = todos los nodos ven los mismos datos y las actualizaciones en el mismo orden.
+Fuente: 23/24 P1.
+---
+P: ¿Cuál es la afirmación más precisa? Un sistema distribuido es un sistema...
+a) ... con un único nodo central.
+b) ... con baja redundancia.
+c) ... cuyos componentes se ejecutan en múltiples nodos interconectados.
+d) ... con un solo punto de fallo.
+R: c
+E: Un SD se caracteriza por tener componentes repartidos en varios nodos conectados por red. Lo habitual es justo evitar un nodo central único y un punto único de fallo.
+Fuente: 23/24 P1.
+---
+P: ¿Cuál de los siguientes paradigmas de comunicación se podría considerar «invocación remota»?
+a) Publicador-Suscriptor
+b) Petición-Respuesta
+c) Colas de mensajes
+d) Espacio de tuplas
+R: b
+E: La invocación remota (RPC, RMI) se apoya en protocolos petición-respuesta entre cliente y servidor. Publicación-suscripción, colas de mensajes y espacios de tuplas son comunicación INDIRECTA.
+Fuente: 23/24 P1.
+---
+P: ¿Por qué la siguiente definición de sistema distribuido no es completa?: «Es una colección de computadores autónomos conectados mediante una red, con software diseñado para producir una instalación informática integrada».
+a) No dice nada del papel que juega el sistema operativo.
+b) No indica que las entidades que se comunican son procesos.
+c) No indica que la comunicación debe realizarse mediante paso de mensajes.
+d) No dice nada sobre la función que realizan los protocolos de transporte de TCP/IP.
+R: c
+E: La clave de la definición de Coulouris es que los componentes se comunican y coordinan ÚNICAMENTE mediante paso de mensajes. Esta definición no lo dice.
+Fuente: 23/24 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: En el diseño de un protocolo, ¿a qué se refiere exactamente la «sincronización»?
+a) Indica la representación binaria de los posibles valores de cada campo del mensaje.
+b) Indica la frecuencia de reloj a la que se deben transmitir los mensajes.
+c) Indica las combinaciones o patrones válidos de mensajes de petición y respuesta.
+d) Indica los valores de los identificadores de mensajes consecutivos.
+R: c
+E: Sincronización = qué secuencias de mensajes son válidas (p. ej., en TFTP: WRQ → ACK(0) → DATA(1) → ACK(1)…). La representación binaria es sintaxis; no tiene nada que ver con frecuencias de reloj.
+Fuente: 23/24 P1.
+---
+P: ¿Cuál de las siguientes palabras reservadas permite crear una lista de tamaño arbitrario como un campo en la especificación de un mensaje Protocol Buffers?
+a) enum
+b) list
+c) array
+d) repeated
+R: d
+E: "repeated" indica que el campo puede aparecer 0 o más veces (una lista). Ejemplo: repeated string interests = 3; "list" y "array" no son palabras clave de protobuf.
+Fuente: 23/24 P1.
+---
+T: Tema 3 - Invocación remota
+P: ¿Cuál de los siguientes elementos proporciona habitualmente transparencia de localización en un middleware RPC o RMI?
+a) El «binder».
+b) Los stubs del cliente.
+c) El servicio de eventos.
+d) El protocolo de transporte.
+R: a
+E: El binder permite al cliente obtener la referencia a partir de un nombre sin saber dónde está el servidor: transparencia de localización. Los stubs dan transparencia de ACCESO (llamar a lo remoto igual que a lo local).
+Fuente: 23/24 P1.
+---
+T: Tema 1 - Introducción
+P: Se considera que el middleware opera en 2 capas. En la inferior encontramos mecanismos como el paso de mensajes y el soporte multicast. La capa superior incluye la comunicación indirecta y...
+a) RPC y Protocol Buffers
+b) la comunicación de grupos
+c) la invocación remota
+d) la memoria compartida distribuida
+R: c
+E: Capa superior: invocación remota (RPC/RMI) y comunicación indirecta. Capa inferior: primitivas IPC (sockets, paso de mensajes, multicast, overlays). Protocol Buffers es un formato de serialización, no una capa.
+Fuente: 23/24 P1.
+---
+T: Tema 3 - Invocación remota
+P: ¿Por qué no se suele implementar el servicio de binding de servidores (binder) de un middleware utilizando la tecnología de ese mismo middleware?
+a) Sí se suele hacer, es lo habitual.
+b) Añadiría una sobrecarga inaceptable.
+c) El incremento de complejidad es raramente justificable.
+d) Provocaría un deadlock al resolver el propio binder.
+R: a
+E: Pregunta trampa: la premisa es falsa. Lo normal es que el binder sea un servicio más del propio middleware (p. ej., el rmiregistry es un objeto RMI, el portmapper es un programa ONC RPC; su dirección se conoce de antemano).
+Fuente: 23/24 P1.
+---
+P: ¿A qué nos referimos cuando decimos que las interfaces REST deben ser uniformes?
+a) Todas las URL que identifican recursos empiezan por el mismo nombre de dominio.
+b) Todos los endpoints de un API REST empiezan con el mismo prefijo de ruta.
+c) Todas las interacciones con el servidor se basan en el mismo conjunto predefinido de operaciones.
+d) Todo lo anterior.
+R: c
+E: Interfaz uniforme: todos los recursos se manipulan con el mismo conjunto fijo de operaciones (los métodos HTTP GET, POST, PUT, DELETE…), en lugar de definir operaciones propias como en RPC.
+Fuente: 23/24 P1.
+---
+P: ¿Por qué los middlewares RPC suelen proporcionar por defecto invocaciones bloqueantes?
+a) Por simplicidad.
+b) Porque se asemeja a una invocación local convencional.
+c) Porque de esta manera no se requiere la validación de la invocación por parte del servidor.
+d) Porque permite que el proceso de comunicación sea más eficiente.
+R: b
+E: El objetivo de diseño de RPC es imitar una llamada local, y una llamada local bloquea al llamante hasta que la función retorna.
+Fuente: 23/24 P1.
+---
+P: En el contexto de RMI, ¿cuál es la diferencia fundamental entre un objeto remoto y un objeto local?
+a) Un objeto remoto se encuentra en el mismo nodo que hace la invocación, un objeto local está en un nodo diferente.
+b) Un objeto remoto puede ser invocado desde un cliente que está en un nodo diferente, mientras que un objeto local solo puede ser invocado en el mismo nodo donde se encuentra.
+c) Un objeto remoto es más rápido en términos de rendimiento en comparación con un objeto local.
+d) Un objeto remoto y un objeto local son conceptos intercambiables en RMI.
+R: b
+E: Un objeto remoto exporta una interfaz remota y tiene una referencia remota, así que otros procesos pueden invocarlo. Un objeto local solo es accesible desde su propio proceso. Invocar un objeto remoto siempre es más lento.
+Fuente: 23/24 P1.
+---
+P: ¿Cuál es el papel de un «RMI Registry» en una aplicación y cuándo es necesario su uso?
+a) RMI Registry es un componente opcional y no es necesario en aplicaciones RMI.
+b) RMI Registry es un servicio de directorio que permite a los clientes encontrar las referencias de objetos remotos. Es necesario cuando los clientes necesitan localizar objetos remotos por su nombre.
+c) RMI Registry es responsable de la implementación de objetos remotos en el servidor.
+d) RMI Registry es exclusivamente para el registro de objetos locales y no tiene relación con objetos remotos.
+R: b
+E: El registry es el binder de Java RMI: asocia nombres con referencias remotas. Hace falta cuando el cliente localiza objetos por nombre (si ya tiene la referencia por otra vía, no).
+Fuente: 23/24 P1.
+
+% ======================================================================
+% Curso 23/24 - P1R
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: En el contexto de un sistema distribuido, ¿qué se considera «servicio»?
+a) Un componente que proporciona una funcionalidad a usuarios y/o aplicaciones por medio de un interfaz.
+b) Un proceso vinculado a un host que responde a clientes en el contexto de una aplicación cliente-servidor.
+c) Una especificación formal de la interacción entre un conjunto de nodos en el paradigma de aplicaciones peer-to-peer.
+d) La especificación de las operaciones que un servidor exporta para que puedan ser invocadas por un cliente.
+R: a
+E: Servicio = funcionalidad accesible a través de una interfaz. b) define al SERVIDOR (un proceso), c) se parece a un protocolo y d) define la INTERFAZ.
+Fuente: 23/24 P1R.
+---
+P: ¿Se puede considerar que una aplicación desarrollada bajo el paradigma cliente-servidor implementada con sockets encaja en la definición de sistema distribuido?
+a) Sí, en cualquier caso.
+b) No, nunca.
+c) Solo si cliente y servidor se ejecutan sobre nodos diferentes.
+d) Solo si cliente y servidor utilizan tecnologías diferentes.
+R: a
+E: Cliente y servidor son procesos que se comunican y coordinan únicamente por paso de mensajes, aunque estén en la misma máquina. Eso cumple la definición de SD.
+Fuente: 23/24 P1R.
+---
+P: ¿Qué tipo de transparencia no es destacable en el funcionamiento de DNS?
+a) replicación
+b) fallo
+c) localización
+d) movilidad
+R: d
+E: DNS tiene servidores replicados que el usuario no ve (replicación), sigue funcionando si cae uno (fallos) y un nombre no dice dónde está la máquina (localización). Pero la información cacheada tarda en actualizarse si un recurso cambia de dirección, así que la movilidad no es su punto fuerte.
+Fuente: 23/24 P1R.
+---
+P: En un sistema distribuido de llamada por voz hay un serio problema de jitter que hace que la calidad de la comunicación sea muy baja. ¿Qué está pasando?
+a) Los mensajes de audio llegan con una variación muy pequeña en el tiempo de entrega.
+b) Los mensajes de audio llegan con un ancho de banda insuficiente.
+c) Los mensajes de audio llegan con un CRC erróneo.
+d) Los mensajes de audio llegan con una variación en el tiempo de entrega muy grande.
+R: d
+E: Jitter = variación en el tiempo de entrega de mensajes consecutivos. Es una de las tres medidas de rendimiento del canal (latencia, ancho de banda y jitter).
+Fuente: 23/24 P1R.
+---
+P: ¿Cuál de las siguientes define con más precisión el concepto de «interfaz» en un SD?
+a) Un conjunto de invocaciones consecutivas a un mismo servidor desde un determinado cliente.
+b) Un registro de las invocaciones recibidas o enviadas hacia/desde un mismo servidor.
+c) Una especificación de las llamadas que puede recibir un proceso.
+d) La información que específicamente indica la versión del protocolo disponible.
+R: c
+E: La interfaz especifica qué operaciones (con qué argumentos y resultados) ofrece un proceso o servicio. Está muy relacionada con el concepto de API.
+Fuente: 23/24 P1R.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿Qué característica es esencial para cualquier protocolo de SD destinado a garantizar la consistencia de datos?
+a) Tolerancia a fallos.
+b) Atomicidad.
+c) Escalabilidad.
+d) Confiabilidad de red.
+R: b
+E: Para que todos los nodos vean los mismos datos, una actualización debe aplicarse entera en todos o en ninguno (atomicidad). Si no, unos nodos quedarían con la actualización y otros sin ella.
+Fuente: 23/24 P1R.
+---
+T: Tema 1 - Introducción
+P: ¿Cuál de las siguientes técnicas se utiliza comúnmente para la detección y recuperación de fallos en protocolos distribuidos?
+a) Criptografía asimétrica.
+b) Algoritmos de consenso.
+c) Detección de intrusiones.
+d) Compresión de datos.
+R: b
+E: Los algoritmos de consenso permiten que los procesos que siguen vivos se pongan de acuerdo (sobre un valor, un líder, el estado…) aunque otros fallen. Las otras opciones son de seguridad o eficiencia.
+Fuente: 23/24 P1R.
+---
+P: ¿Qué función desempeñan los algoritmos de elección?
+a) Ordenar los mensajes.
+b) Asignar un rol especial a un proceso.
+c) Controlar el ancho de banda de red.
+d) Optimizar la latencia de la red.
+R: b
+E: Un algoritmo de elección escoge un proceso para un papel especial (coordinador, líder), p. ej. el algoritmo del matón (bully) o el del anillo.
+Fuente: 23/24 P1R.
+---
+P: ¿Por qué es importante la sincronización de relojes físicos?
+a) Mejorar la velocidad de transmisión de datos.
+b) Facilitar la detección de intrusiones.
+c) Coordinar tareas no críticas de gestión.
+d) Reducir la complejidad del código del protocolo.
+R: c
+E: Respuesta oficial. Los relojes físicos nunca están perfectamente sincronizados, así que no se puede confiar en ellos para lo crítico (el orden de eventos se resuelve con relojes lógicos), pero sirven para tareas de gestión no críticas como registros, auditoría o caducidades.
+Fuente: 23/24 P1R.
+---
+T: Tema 3 - Invocación remota
+P: ¿Qué es la invocación remota en sistemas distribuidos?
+a) Un método para realizar operaciones locales en un solo nodo.
+b) La transferencia de datos entre nodos a través de un enlace directo.
+c) La capacidad de llamar a funciones o métodos en nodos remotos.
+d) La sincronización de relojes entre sistemas distribuidos.
+R: c
+E: Invocación remota (RPC/RMI): llamar a un procedimiento o método que se ejecuta en otro proceso, normalmente en otro nodo, como si fuera local.
+Fuente: 23/24 P1R.
+---
+P: ¿Cuál es la diferencia clave entre la invocación remota síncrona y asíncrona?
+a) La invocación síncrona no permite la comunicación bidireccional.
+b) La invocación asíncrona no espera la respuesta inmediata del nodo remoto.
+c) La invocación síncrona no utiliza la red para la comunicación.
+d) La invocación asíncrona siempre requiere un protocolo de seguridad.
+R: b
+E: Síncrona: el cliente se bloquea hasta recibir la respuesta. Asíncrona: el cliente sigue trabajando y recoge la respuesta después.
+Fuente: 23/24 P1R.
+---
+P: ¿Qué describe mejor lo que es un stub en el contexto de invocación remota?
+a) Código generado que se encarga de la serialización.
+b) Una herramienta de depuración para sistemas distribuidos.
+c) Un componente de hardware para mejorar el rendimiento.
+d) Un protocolo de red para la transferencia de datos.
+R: a
+E: Los stubs los genera el compilador de interfaces a partir del IDL. Se encargan de serializar/deserializar argumentos y resultados y de enviar/recibir los mensajes.
+Fuente: 23/24 P1R.
+---
+P: ¿Cuál es el propósito principal de la serialización en la invocación remota?
+a) Mejorar la eficiencia del sistema de archivos.
+b) Facilitar la lectura de datos en el nodo remoto.
+c) Convertir objetos en una secuencia de bytes para su transmisión.
+d) Optimizar el rendimiento de la red.
+R: c
+E: Serializar (marshalling) = convertir las estructuras de datos u objetos en una secuencia de bytes que se puede enviar por la red.
+Fuente: 23/24 P1R.
+---
+P: ¿Cómo influye la topología de red en la eficiencia de la invocación remota?
+a) No tiene impacto, ya que la invocación remota es independiente de la red.
+b) Una topología de red en anillo mejora la latencia de la invocación remota.
+c) Una topología de red centralizada facilita la gestión de la invocación remota.
+d) Una topología de red descentralizada puede aumentar la latencia y la complejidad.
+R: d
+E: Más saltos y rutas más complejas aumentan la latencia de cada petición y respuesta. La invocación remota nunca es independiente de la red.
+Fuente: 23/24 P1R.
+
+% ======================================================================
+% Curso 23/24 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Qué es un sistema distribuido?
+a) Un sistema en el que todos los componentes están en una única máquina.
+b) Un sistema en el que los componentes están dispersos pero trabajan de forma independiente.
+c) Un sistema en el que los componentes están dispersos y cooperan para lograr un objetivo común.
+d) Un sistema que solo funciona en redes locales.
+R: c
+E: Los componentes están repartidos en varios nodos y se coordinan (por paso de mensajes) para ofrecer un servicio común. Si trabajasen de forma independiente no sería un sistema.
+Fuente: 23/24 P1X.
+---
+P: ¿Cuál es una característica clave de los sistemas distribuidos?
+a) Centralización de los recursos.
+b) Independencia de los componentes.
+c) Compartición de recursos.
+d) Uso exclusivo de redes privadas.
+R: c
+E: La compartición de recursos es la motivación principal de un SD.
+Fuente: 23/24 P1X.
+---
+P: ¿Qué es la consistencia en un sistema distribuido?
+a) La velocidad con la que se pueden añadir nuevos componentes.
+b) La capacidad de mantener el mismo valor para un registro en todos los nodos.
+c) La capacidad de funcionar solo durante horas específicas del día.
+d) La habilidad de funcionar sin conexión a internet.
+R: b
+E: Consistencia: todos los nodos (réplicas) ven los mismos datos. a) se parece más a la escalabilidad.
+Fuente: 23/24 P1X.
+---
+P: ¿Cuál es uno de los problemas más comunes en sistemas distribuidos?
+a) Exceso de recursos disponibles.
+b) Baja latencia en todas las operaciones.
+c) Coordinación y sincronización de componentes distribuidos.
+d) Facilidad de depuración de errores.
+R: c
+E: Sin reloj global, con concurrencia y fallos independientes, coordinar y sincronizar los componentes es uno de los grandes retos. La depuración de un SD es difícil, no fácil.
+Fuente: 23/24 P1X.
+---
+P: ¿Cuál de las siguientes encaja mejor en el concepto de escalabilidad en un sistema distribuido?
+a) La capacidad de mantenerse sin cambios a lo largo del tiempo.
+b) La capacidad de agregar recursos adicionales sin afectar el rendimiento.
+c) La habilidad de realizar operaciones en tiempo real.
+d) Ninguna de las anteriores es correcta.
+R: b
+E: Un sistema es escalable si sigue siendo efectivo cuando crecen significativamente el número de recursos o de usuarios (idealmente con un coste de recursos O(n) para n usuarios).
+Fuente: 23/24 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿Qué es TFTP?
+a) Un protocolo para comunicación de texto en sistemas en red.
+b) Un protocolo para intercambio de datos en una LAN.
+c) Un protocolo para envío de mensajes cifrados.
+d) Un protocolo para la transferencia de archivos.
+R: d
+E: Trivial File Transfer Protocol (RFC 1350): transferencia de ficheros sobre UDP, con su propio mecanismo de ACK por bloque. Es el ejemplo de protocolo que se estudia en clase.
+Fuente: 23/24 P1X.
+---
+P: ¿En qué consiste la temporización de los mensajes en el diseño de un protocolo?
+a) Es un timeout para los mensajes que se transmiten.
+b) Tiene que ver con la frecuencia en que se envían los mensajes.
+c) Secuencia de intercambio de mensajes de cada servicio del protocolo.
+d) Se establece un timestamp cuando se transmite y recibe cada mensaje del protocolo.
+R: c
+E: Temporización (o sincronización) = el orden y los patrones de intercambio de mensajes de cada servicio. No es un timeout ni una marca de tiempo (aunque los timeouts formen parte de ella).
+Fuente: 23/24 P1X.
+---
+P: ¿Qué aspecto del diseño de un protocolo resuelve el uso de sockets tipo AF-INET/SOCK-STREAM?
+a) Sintaxis y temporización.
+b) Sintaxis y semántica
+c) Sólo la sintaxis.
+d) No resuelve ninguno.
+R: d
+E: AF_INET/SOCK_STREAM es un socket TCP. TCP es transporte: la sintaxis, la semántica y la sincronización del protocolo de aplicación siguen por definir. Criterio que se repite cada año.
+Fuente: 23/24 P1X y 22/23 P1.
+---
+P: Para una misma estructura, un mensaje en Protobuf, en comparación con un mensaje JSON, será:
+a) más corto
+b) más largo
+c) igual
+d) no suelen ser alternativas
+R: a
+E: Protobuf es binario y no incluye los nombres de los campos (solo su número), así que ocupa menos que el JSON equivalente.
+Fuente: 23/24 P1X.
+---
+T: Tema 3 - Invocación remota
+P: Señale la opción correcta. En una invocación RPC, el proceso llamado, que hace las funciones de servidor y ejecuta el stub:
+a) Serializa el resultado de la llamada al procedimiento local
+b) Serializa los argumentos de la llamada
+c) Deserializa el resultado de la llamada al procedimiento local
+d) Envía el mensaje de petición
+R: a
+E: El stub del servidor deserializa los ARGUMENTOS, llama al procedimiento local y serializa el RESULTADO para la respuesta. Serializar los argumentos, enviar la petición y deserializar el resultado lo hace el stub del cliente.
+Fuente: 23/24 P1X.
+---
+P: ¿Qué semántica de invocación parece, a priori, la más adecuada para una señal periódica que indica que un dispositivo sigue activo (heartbeat)?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) exactly-once
+R: a
+E: Si se pierde un heartbeat no pasa nada, en el siguiente periodo llega otro. No merece la pena pagar reintentos ni filtrado: maybe.
+Fuente: 23/24 P1X.
+---
+P: ¿Cómo se identifican los recursos en REST?
+a) URI
+b) URN
+c) Identificadores REST
+d) Número de secuencia globales (GSN)
+R: a
+E: En REST cada recurso se identifica con una URI (p. ej., /users/42) y se manipula con los métodos HTTP.
+Fuente: 23/24 P1X.
+---
+P: Un lenguaje de definición de interfaces como Slice te permite especificar ______ de una comunicación cliente-servidor:
+a) la sintaxis
+b) la semántica
+c) la temporización
+d) todos los aspectos
+R: a
+E: Un IDL fija los tipos de los mensajes: nombres de operaciones, argumentos y resultados (sintaxis). Qué significan y en qué orden se invocan no lo expresa.
+Fuente: 23/24 P1X.
+---
+P: ¿Qué aspectos del protocolo de una aplicación quedan definidos por el hecho de emplear REST con HTTP?
+a) La semántica de las operaciones
+b) El formato de los mensajes
+c) Los patrones de intercambio de mensajes
+d) Todos los anteriores
+R: d
+E: HTTP fija el formato de los mensajes (petición/respuesta con cabeceras), el patrón petición-respuesta, y REST da a cada método un significado predefinido (GET lee, PUT reemplaza, DELETE borra…).
+Fuente: 23/24 P1X.
+
+% ======================================================================
+% Curso 22/23 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Indique cuál de las siguientes NO es una de las 8 falacias clásicas de los sistemas distribuidos:
+a) La red es fiable
+b) La red es segura
+c) La red es transparente
+d) La red es homogénea
+R: c
+E: "La red es transparente" no está entre las 8 falacias (fiable, latencia cero, ancho de banda infinito, segura, topología fija, un solo administrador, coste de transporte cero, homogénea).
+Fuente: 22/23 P1 (y 21/22 P1X).
+---
+P: En un sistema distribuido, ¿qué problema resuelve el uso de sistemas abiertos y estándares?
+a) La heterogeneidad
+b) La escalabilidad
+c) La transparencia
+d) La seguridad
+R: a
+E: Con estándares abiertos y públicos (RFC, protocolos documentados), sistemas con distinto hardware, SO, lenguaje o fabricante pueden interoperar: se resuelve la heterogeneidad.
+Fuente: 22/23 P1.
+---
+P: ¿Cuál de los siguientes incluye únicamente tipos de transparencia deseables en un middleware de comunicaciones?
+a) acceso, localización y concurrencia
+b) replicación, fallo y calidad de servicio
+c) prestaciones, escalabilidad y trazabilidad
+d) tiempo, localización y persistencia
+R: a
+E: Las transparencias deseables en un middleware de comunicaciones son sobre todo acceso, localización y concurrencia. "Calidad de servicio", "trazabilidad", "tiempo" o "persistencia" no son tipos de transparencia.
+Fuente: 22/23 P1.
+---
+P: ¿Con cuál de los siguientes está más relacionado el concepto de «interface»?
+a) API
+b) librería
+c) servidor
+d) proceso
+R: a
+E: La interfaz es la especificación de las operaciones que ofrece un servicio: eso es una API (Application Programming Interface).
+Fuente: 22/23 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: Estamos diseñando un protocolo binario muy sencillo para dispositivos de bajo coste y capacidad de cómputo basados en microcontrolador. ¿Cuál sería la forma más adecuada de ofrecer confiabilidad básica?
+a) Encapsular nuestro protocolo sobre TCP.
+b) Encapsular nuestro protocolo sobre UDP.
+c) No es posible ofrecer confiabilidad en el contexto descrito.
+d) Ofrecer un mecanismo básico de ACKs y timeouts en nuestro protocolo.
+R: d
+E: TCP es demasiado pesado para un microcontrolador y UDP no da fiabilidad. Lo adecuado es incorporar en el propio protocolo un sistema sencillo de ACK + timeout + reenvío (como hace TFTP sobre UDP).
+Fuente: 22/23 P1.
+---
+T: Tema 3 - Invocación remota
+P: En relación al concepto de invocación remota, ¿qué es la serialización?
+a) El sistema para crear una serie de versiones de un protocolo.
+b) La codificación de datos de usuario que se usa en los mensajes.
+c) El mecanismo que impide que un servidor atienda varios clientes a la vez.
+d) El componente que ordena las peticiones en función del número de secuencia.
+R: b
+E: Serializar es codificar los datos de la aplicación (argumentos, resultados) en la secuencia de bytes que viaja en los mensajes. No tiene nada que ver con "atender en serie" ni con ordenar peticiones.
+Fuente: 22/23 P1 (y 22/23 P1R).
+---
+P: ¿Qué semántica podría implementar sólo y exclusivamente con el protocolo de la capa de transporte UDP sin ningún mecanismo adicional (ni ACK, ni filtro de duplicados, etc.)?
+a) maybe
+b) at-most-once
+c) exactly-once
+d) at-least-once
+R: a
+E: Sin reintentos, ni filtro, ni historial, la petición se ejecuta 0 o 1 veces y el cliente no sabe cuál: maybe. Las demás necesitan al menos timeouts y reintentos.
+Fuente: 22/23 P1.
+---
+P: Una invocación RMI idempotente que retorna resultado se debería implementar con el patrón de llamada:
+a) Request (R)
+b) Request-Reply (RR)
+c) Request-Reply-Ack (RRA)
+d) Ninguno de los anteriores
+R: b
+E: Necesita respuesta (devuelve un resultado), así que R no basta. Al ser idempotente se puede re-ejecutar si se pierde la respuesta, así que no hace falta guardar el historial de respuestas ni el ACK de RRA.
+Fuente: 22/23 P1.
+---
+P: ¿Qué semántica de invocación parece, a priori, la más adecuada para un sensor de presión que hace una lectura por segundo que no debe perderse?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) exactly-once
+R: b
+E: "No debe perderse" descarta maybe: hay que reintentar. Recibir dos veces la misma lectura no es grave (idempotente), así que no hace falta filtrar duplicados: at-least-once es lo más barato que cumple. Ojo: si el enunciado no exige que llegue, la respuesta suele ser maybe.
+Fuente: 22/23 P1.
+---
+P: El enlace (binding) en las RPC de Sun se realiza mediante:
+a) XDR y la interfaz.
+b) Un proceso denominado portmapper en un puerto bien conocido.
+c) La herramienta rpcgen.
+d) Tres campos enteros (NUM-PROG, NUM-VERSION, NUM-PROCEDURE)
+R: b
+E: En Sun/ONC RPC el binder es el portmapper (puerto 111). XDR es el formato de serialización y rpcgen el compilador de interfaces.
+Fuente: 22/23 P1.
+---
+P: Cuando se dice que un mecanismo de resolución de servidores RPC es persistente, ¿a qué nos estamos refiriendo?
+a) El binder está disponible siempre en la misma IP y puerto.
+b) El binder almacena las referencias a los servidores RPC en disco.
+c) El binder devuelve siempre la misma referencia para un servidor dado.
+d) El cliente resuelve la referencia en la primera invocación y luego la reutiliza.
+R: d
+E: Binding persistente: el cliente consulta al binder una vez y reutiliza la referencia en las invocaciones siguientes, en lugar de resolverla en cada llamada.
+Fuente: 22/23 P1.
+---
+P: ¿Qué mecanismo requiere el estilo RRA que no necesitan los demás?
+a) Números de secuencia.
+b) No requiere ningún mecanismo adicional.
+c) Registro de invocaciones realizadas (historia).
+d) Un hilo por petición para evitar llamadas bloqueantes.
+R: c
+E: El servidor guarda las respuestas en un historial (indexado por id de petición) para poder retransmitirlas sin re-ejecutar; el ACK le indica cuándo puede borrarlas.
+Fuente: 22/23 P1.
+
+% ======================================================================
+% Curso 22/23 - P1R
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Cuál es una de las principales consecuencias negativas de no disponer de un reloj global en los sistemas distribuidos asíncronos?
+a) Menor confiabilidad en las comunicaciones.
+b) Deben coordinar sus acciones mediante mensajes.
+c) La falta de reloj global no tiene consecuencias relevantes.
+d) Complejidad adicional en los mecanismos de serialización.
+R: b
+E: Sin un reloj común no se puede ordenar ni coordinar por tiempo; la única forma de coordinarse es intercambiando mensajes.
+Fuente: 22/23 P1R.
+---
+P: Específicamente, ¿qué significa que en un sistema distribuido pueden ocurrir «fallos independientes»?
+a) Los fallos independientes no son un aspecto relevante de los sistemas distribuidos.
+b) Los posibles fallos que pueden ocurrir en un proceso tienen causas no relacionadas.
+c) Un proceso puede fallar de forma periódica durante la ejecución de un algoritmo distribuido.
+d) Algunos de los componentes del sistema pueden fallar mientras otros siguen funcionando correctamente.
+R: d
+E: Fallo parcial: un nodo o la red puede caer mientras el resto sigue funcionando (y a menudo sin enterarse). En un sistema centralizado, si falla, falla todo.
+Fuente: 22/23 P1R.
+---
+P: ¿Cuál es la finalidad principal de los sistemas distribuidos?
+a) Seguridad.
+b) Compartición de recursos.
+c) Computación de alto rendimiento.
+d) Alta disponibilidad y tolerancia a fallos.
+R: b
+E: La motivación principal de un SD es compartir recursos (hardware, datos, servicios). El alto rendimiento es el objetivo de la computación paralela; la disponibilidad es una ventaja, no la finalidad principal.
+Fuente: 22/23 P1R y 22/23 P1X.
+---
+P: ¿Qué es la escalabilidad en un sistema distribuido?
+a) La probabilidad de que un sistema funcione o desarrolle cierta función bajo condiciones fijadas y durante un período de tiempo.
+b) La habilidad de satisfacer los requerimientos de tiempo cuando se procesan y transmiten flujos de datos multimedia y en tiempo real.
+c) Capacidad de conservar su efectividad cuando el número de recursos o usuarios se incrementa significativamente.
+d) La ocultación al usuario de los componentes que conforman el sistema distribuido.
+R: c
+E: a) es la fiabilidad, b) la calidad de servicio y d) la transparencia.
+Fuente: 22/23 P1R.
+---
+T: Tema 3 - Invocación remota
+P: ¿Qué semántica de invocación parece, a priori, la más adecuada para una invocación que debe retornar un valor variable desde un servicio?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) exactly-once
+R: c
+E: Respuesta oficial. Si el valor devuelto varía entre ejecuciones, re-ejecutar la operación para recuperar una respuesta perdida podría devolver un valor distinto del original. Con at-most-once el servidor reenvía la respuesta guardada en vez de re-ejecutar.
+Fuente: 22/23 P1R.
+---
+T: Tema 2 - Diseño de protocolos
+P: Indique la afirmación FALSA sobre Protocol Buffers:
+a) Es compatible hacia atrás/adelante.
+b) Genera funciones de serialización/deserialización.
+c) Genera código en distintos lenguajes de programación.
+d) Utiliza formato XML para la serialización.
+R: d
+E: Protocol Buffers usa un formato BINARIO propio, no XML. Lo demás es cierto: los números de campo permiten compatibilidad entre versiones y protoc genera código de serialización para muchos lenguajes.
+Fuente: 22/23 P1R.
+---
+P: Por sí sola, Protocol Buffers no es una tecnología válida para crear sistemas distribuidos porque...
+a) No soporta versionado de interfaces.
+b) No permite especificar operaciones.
+c) Es una tecnología obsoleta.
+d) No proporciona soporte multi-lenguaje.
+R: b
+E: Protocol Buffers solo describe y serializa MENSAJES (datos). Para definir servicios con operaciones invocables hace falta algo más (p. ej., gRPC, que añade "service" y "rpc").
+Fuente: 22/23 P1R.
+---
+P: ¿Cuál de los siguientes es un aspecto no funcional en el diseño de un protocolo?
+a) Extensibilidad.
+b) Disponibilidad.
+c) Documentación de calidad.
+d) No se consideran aspectos no funcionales.
+R: a
+E: Las consideraciones no funcionales del diseño de un protocolo son seguridad, extensibilidad y eficiencia. La extensibilidad es la respuesta habitual en este tipo de preguntas.
+Fuente: 22/23 P1R.
+---
+T: Tema 3 - Invocación remota
+P: Como programador de aplicaciones distribuidas, su empresa empieza a usar un middleware RPC. ¿De qué aspectos ya no se tendrá que preocupar?
+a) Serialización
+b) Conexión y desconexión
+c) Uso de las primitivas del interfaz socket del SO.
+d) De ninguna de las otras opciones.
+R: d
+E: Respuesta oficial: "de ninguna de las otras opciones" en el sentido de que ninguna de ellas sola es la respuesta: el middleware RPC se encarga de TODAS (serialización, conexión y uso de sockets), no solo de una. Ojo: es una pregunta de redacción ambigua.
+Fuente: 22/23 P1R.
+---
+P: ¿Qué modelo de RMI bloquea el hilo que realiza la invocación en el cliente hasta que la llamada se ha completado?
+a) Modelo asíncrono
+b) Modelo síncrono
+c) Modelo concurrente
+d) Todos los modelos lo permiten
+R: b
+E: En la invocación síncrona (la habitual) el hilo del cliente se queda bloqueado hasta recibir la respuesta, como en una llamada local.
+Fuente: 22/23 P1R.
+
+% ======================================================================
+% Curso 22/23 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Cuál de las siguientes afirmaciones NO corresponde a un sistema distribuido?
+a) No existe una referencia temporal común a todos los procesos involucrados.
+b) El único mecanismo de comunicación disponible es el intercambio de mensajes.
+c) La provisión de los servicios es independiente del lenguaje de programación.
+d) La interacción entre procesos puede provocar fallos que solo afectan a parte de ellos.
+R: c
+E: a) es la ausencia de reloj global, b) el paso de mensajes y d) los fallos independientes: todo eso define un SD. La independencia del lenguaje es deseable (heterogeneidad), pero no forma parte de la definición.
+Fuente: 22/23 P1X.
+---
+P: La frase «La red es confiable» es una falacia porque...
+a) existen muchos ataques que afectan a la red.
+b) en la red pueden producirse fallos.
+c) podemos usar muchos protocolos de red distintos.
+d) no podemos confiar en determinadas tecnologías.
+R: b
+E: "Fiable/confiable" se refiere a que los mensajes lleguen: en la red se pierden, corrompen o duplican mensajes. Los ataques corresponden a otra falacia ("la red es segura").
+Fuente: 22/23 P1X.
+---
+P: Seleccione la opción que NO está encaminada a resolver la heterogeneidad en un sistema distribuido:
+a) Tecnologías de red propietarias.
+b) Especificaciones documentadas, públicas y accesibles.
+c) Estándares abiertos y RFCs.
+d) Middlewares.
+R: a
+E: Las tecnologías propietarias crean islas incompatibles. La heterogeneidad se resuelve con sistemas abiertos (especificaciones públicas, estándares) y con middleware.
+Fuente: 22/23 P1X.
+---
+P: ¿A qué se refiere la «concurrencia» como característica de un SD?
+a) Varios procesos pueden progresar a la vez.
+b) Varias aplicaciones pueden existir al mismo tiempo.
+c) Se pueden resolver varios problemas diferentes en el mismo SD.
+d) Varios usuarios pueden estar conectados al mismo tiempo.
+R: a
+E: Concurrencia: los procesos de los distintos nodos se ejecutan simultáneamente y progresan a la vez, compartiendo recursos.
+Fuente: 22/23 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: Un protocolo queda completamente especificado definiendo:
+a) Sintaxis y semántica.
+b) Sintaxis, semántica y temporización.
+c) Sintaxis, semántica y el servicio que presta (interfaz).
+d) Sintaxis, semántica y el servidor que lo ejecuta.
+R: b
+E: Los tres elementos de un protocolo: sintaxis (formato), semántica (significado) y temporización/sincronización (orden de intercambio).
+Fuente: 22/23 P1X.
+---
+P: ¿En qué aspectos de la implementación de un protocolo nos puede ayudar «Google Protocol Buffers»?
+a) sincronización de mensajes.
+b) marshalling y unmarshalling.
+c) creación de interfaces.
+d) gestión de versiones.
+R: b
+E: Protocol Buffers es una tecnología de serialización: genera el código para convertir mensajes a bytes y viceversa. No define operaciones (interfaces) ni el orden de los mensajes.
+Fuente: 22/23 P1X.
+---
+P: ¿Qué tipo de protocolo le parece más eficiente para un sistema de sensorización que monitoriza la temperatura de todas las salas de un edificio?
+a) Cada sensor tiene asociado un servidor, y el cliente consulta a todos ellos regularmente.
+b) Cada sensor tiene asociado un cliente que envía su valor regularmente a un servicio remoto.
+c) Un proceso local comprueba el valor del sensor y envía un mensaje al servidor si el valor cambia.
+d) Cada sensor tiene un servidor asociado, pero solo responde si el valor ha cambiado.
+R: c
+E: Enviar solo cuando el valor cambia (push por eventos) minimiza los mensajes. Consultar a todos (pull, a) o enviar siempre periódicamente (b) genera tráfico inútil cuando la temperatura no cambia; d) no tiene sentido (un servidor siempre debe responder).
+Fuente: 22/23 P1X.
+---
+T: Tema 3 - Invocación remota
+P: Marque la afirmación FALSA en relación al proceso de «serialización»:
+a) Todos los componentes de un middleware usan el mismo sistema de serialización.
+b) Produce siempre el mismo resultado para los mismos datos de entrada.
+c) Depende del lenguaje de implementación de cliente y servidor.
+d) Es un proceso reversible.
+R: c
+E: La serialización produce una representación canónica independiente del lenguaje: así un cliente en Python puede hablar con un servidor en C++. Por eso no depende del lenguaje de cliente y servidor.
+Fuente: 22/23 P1X.
+---
+T: Tema 1 - Introducción
+P: Se considera que el middleware opera en 2 capas. En la superior encontramos la comunicación indirecta y la invocación remota. ¿Qué primitivas de comunicación incluye la capa inferior?
+a) RPC y RMI
+b) sockets y paso de mensajes
+c) sockets, paso de mensajes, RPC y RMI
+d) sockets, paso de mensajes, soporte multicast y redes overlay
+R: d
+E: La capa inferior (primitivas IPC sobre UDP y TCP) incluye sockets, paso de mensajes, soporte multicast y redes overlay. b) es incompleta y RPC/RMI pertenecen a la capa superior.
+Fuente: 22/23 P1X.
+---
+T: Tema 3 - Invocación remota
+P: Si el middleware RPC/RMI soporta varias semánticas de invocación, ¿cuál debemos elegir?
+a) La que más garantías ofrezca.
+b) La que nos permita escribir un código más simple.
+c) La que más se adecúe a cada procedimiento o método.
+d) La más eficiente en términos de número de mensajes y consumo de recursos.
+R: c
+E: Cada operación tiene sus necesidades: una idempotente puede usar at-least-once, una no idempotente necesita at-most-once, una lectura prescindible vale con maybe. Se elige por método.
+Fuente: 22/23 P1X.
+---
+P: ¿Qué estilo de protocolo de intercambio es el adecuado para implementar la semántica «at-least-once»?
+a) R
+b) RR
+c) RRA
+d) two-way
+R: b
+E: at-least-once reintenta hasta recibir la respuesta (hace falta Reply) y re-ejecuta si hay duplicados, así que no necesita historial ni ACK: RR.
+Fuente: 22/23 P1X.
+---
+P: Su empresa, que venía utilizando únicamente sockets, ha decidido basar sus nuevas aplicaciones distribuidas en Protocol Buffers. Como programador, ¿de qué aspecto tendrá que seguir ocupándose?
+a) Definición de interfaces.
+b) Serialización.
+c) Conexión y desconexión.
+d) El API de socket del SO.
+R: a
+E: Respuesta oficial. Protocol Buffers resuelve la serialización a partir de la definición de los mensajes, pero no permite definir operaciones: la interfaz del servicio (qué operaciones hay y qué mensajes usan) sigue siendo cosa del programador.
+Fuente: 22/23 P1X.
+---
+P: Señale una importante diferencia de REST respecto a RPC/RMI:
+a) No es necesario serializar los datos antes de enviarlos.
+b) Su implementación no se suele basar en sockets.
+c) Se utiliza la misma interfaz sin importar el tipo de recurso.
+d) El compilador de interfaces se ejecuta automáticamente en cada llamada.
+R: c
+E: Interfaz uniforme: en REST todos los recursos se manejan con los mismos métodos HTTP, mientras que en RPC/RMI cada servicio define sus propias operaciones. REST también serializa (JSON, XML…) y se implementa sobre sockets (TCP).
+Fuente: 22/23 P1X.
+
+% ======================================================================
+% Curso 21/22 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: La alteración o corrupción de datos constituye la violación de ¿qué propiedad del sistema distribuido?
+a) Confidencialidad
+b) Integridad
+c) Disponibilidad
+d) Fiabilidad
+R: b
+E: Seguridad CIA: Confidencialidad (que nadie no autorizado lea), Integridad (que nadie altere o corrompa los datos) y Disponibilidad (que el servicio esté accesible).
+Fuente: 21/22 P1.
+---
+P: ¿Cuál NO es una primitiva IPC (InterProcess Communication) en los sistemas distribuidos?
+a) sockets
+b) paso de mensajes
+c) soporte multicast
+d) memoria compartida
+R: d
+E: En un SD no hay memoria compartida: los procesos están en máquinas distintas y solo se comunican por mensajes. Sockets, paso de mensajes y multicast sí son primitivas IPC.
+Fuente: 21/22 P1.
+---
+P: Si para lograr una misma funcionalidad el software de un SD es más complejo que el de uno centralizado, ¿cuál NO es una razón para hacerlo distribuido?
+a) Ratio coste/rendimiento
+b) Escalabilidad
+c) Disponibilidad
+d) Simplicidad
+R: d
+E: El propio enunciado dice que el software distribuido es más complejo, así que la simplicidad nunca puede ser una razón. Coste/rendimiento, escalabilidad y disponibilidad sí son ventajas de un SD.
+Fuente: 21/22 P1.
+---
+P: ¿De qué aspecto del SD es la consistencia una consecuencia directa?
+a) seguridad
+b) concurrencia
+c) heterogeneidad
+d) ausencia de un reloj global
+R: b
+E: Si varios procesos acceden y modifican a la vez los mismos datos (o réplicas), hay que garantizar que todos vean un estado consistente. El problema surge de la concurrencia.
+Fuente: 21/22 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿En qué aspectos de la implementación de un protocolo nos puede ayudar «Google Protocol Buffers»?
+a) semántica y sintaxis
+b) sintaxis y temporización
+c) solo con la sintaxis
+d) solo con la semántica
+R: c
+E: Protocol Buffers define el formato de los mensajes (campos, tipos, codificación): la sintaxis. Ni el significado de los campos ni el orden de los mensajes.
+Fuente: 21/22 P1 y 21/22 P1R.
+---
+P: ¿Cuál de los siguientes mecanismos define la semántica de la interfaz?
+a) RPC
+b) RMI
+c) REST
+d) Petición/respuesta
+R: c
+E: REST impone una interfaz uniforme con operaciones de significado predefinido (GET = leer, PUT = reemplazar, DELETE = borrar…). En RPC/RMI cada servicio define sus operaciones y su significado.
+Fuente: 21/22 P1.
+---
+P: ¿Qué aspectos de la implementación de un servicio quedan definidos por el uso de REST?
+a) semántica y sintaxis
+b) solo la sintaxis
+c) solo la semántica
+d) ninguna de las anteriores
+R: a
+E: REST sobre HTTP fija la sintaxis (formato de los mensajes HTTP: método, URI, cabeceras, cuerpo) y la semántica (significado predefinido de cada método).
+Fuente: 21/22 P1R.
+---
+T: Tema 3 - Invocación remota
+P: ¿Por qué el versionado de interfaces es tan importante?
+a) Permite identificar y eliminar código obsoleto.
+b) Favorece y simplifica la evolución de los servicios.
+c) No es importante. Es una característica raramente soportada por los middlewares.
+d) Permite utilizar lenguajes de programación distintos en la implementación del servidor.
+R: b
+E: Con versiones (p. ej., el número de versión de ONC RPC) un servicio puede cambiar su interfaz sin romper a los clientes antiguos: se mantienen varias versiones a la vez.
+Fuente: 21/22 P1.
+---
+P: Está implementando un middleware para hacerle la competencia a ZeroC. Su primer cliente le pide un mecanismo de RPC no bloqueante y no fiable. Al usar enlaces de comunicaciones de pago por byte transmitido, le pide que minimice los bytes transmitidos. ¿Qué modelo de intercambio de mensajes es más adecuado?
+a) Request (R)
+b) Request-Reply (RR)
+c) Request-Reply-Ack (RRA)
+d) Serialización JSON
+R: a
+E: No bloqueante y no fiable: el cliente no espera respuesta ni confirmación. Solo se envía la petición, con el mínimo de bytes posible.
+Fuente: 21/22 P1.
+---
+P: ¿Qué semántica de invocación parece, a priori, la más adecuada para un sensor de humedad del terreno que envía una lectura cada minuto?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) exactly-once
+R: a
+E: La humedad del terreno cambia lentamente y llega una lectura nueva cada minuto: perder una no importa. maybe es la más barata. Compárala con el sensor de presión "cuya lectura no debe perderse" (at-least-once).
+Fuente: 21/22 P1.
+---
+P: Una transacción bancaria sobre una red confiable mediante RMI con una semántica «at-most-once» implica:
+a) Retransmitir mensajes perdidos y no filtrar duplicados
+b) No retransmitir mensajes perdidos pero filtrar duplicados
+c) Retransmitir mensajes perdidos y filtrar duplicados
+d) No es posible implementar esa semántica de llamada con RMI, debido a que es «stateless»
+R: c
+E: at-most-once = reintentar la petición + filtrar duplicados + retransmitir el resultado guardado. a) describe at-least-once.
+Fuente: 21/22 P1.
+---
+P: Un proceso software A invoca, mediante el mecanismo RPC, una función en el proceso B en otra máquina con un argumento valor. La invocación no devuelve nada. En este proceso:
+a) La serialización (marshalling) y des-serialización (unmarshalling) del argumento valor se realizan en A y B.
+b) La serialización (marshalling) del argumento valor se realiza en B y la des-serialización (unmarshalling) se realiza en A.
+c) La serialización (marshalling) del argumento valor se realiza en A y la des-serialización (unmarshalling) se realiza en B.
+d) No se requiere ningún proceso de serialización si el dato se pasa por valor.
+R: c
+E: El argumento viaja de A (cliente) a B (servidor): el stub de A lo serializa y el de B lo deserializa. Como no hay valor de retorno, no se serializa nada en sentido contrario.
+Fuente: 21/22 P1.
+---
+P: Indique cuál de los siguientes estándares NO se usa en los servicios web basados en REST:
+a) HTTP
+b) HTTPS
+c) URL
+d) WSDL
+R: d
+E: WSDL es el lenguaje de descripción de interfaces de los servicios web SOAP. REST usa HTTP/HTTPS y URL/URI.
+Fuente: 21/22 P1 y 21/22 P1R.
+
+% ======================================================================
+% Curso 21/22 - P1R
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Complete la frase con la opción más adecuada. Aislar al desarrollador de la heterogeneidad de un sistema distribuido y de las particularidades no funcionales del mismo es la principal función del:
+a) Modelo RPC
+b) Modelo RMI
+c) Middleware
+d) Mecanismo de comunicación Socket
+R: c
+E: Es la definición de middleware: enmascara la heterogeneidad y los aspectos no funcionales para que el programador se centre en la funcionalidad. RPC y RMI son modelos que ofrece el middleware.
+Fuente: 21/22 P1R.
+---
+P: La probabilidad de que un sistema funcione de acuerdo a su especificación de requisitos se denomina:
+a) Disponibilidad
+b) Fiabilidad
+c) Tolerancia a fallos
+d) Consistencia
+R: b
+E: Fiabilidad: probabilidad de que el sistema funcione según su especificación durante un periodo. Disponibilidad: fracción del tiempo en que el sistema es utilizable.
+Fuente: 21/22 P1R.
+---
+P: ¿Cuál de las siguientes NO es una característica principal de los sistemas distribuidos?
+a) Ejecución concurrente de procesos.
+b) Reloj global común.
+c) Fallos independientes.
+d) Ninguna es una característica principal.
+R: b
+E: Justo al revés: una característica de los SD es la AUSENCIA de reloj global.
+Fuente: 21/22 P1R.
+---
+T: Tema 2 - Diseño de protocolos
+P: Se encuentra diseñando el protocolo binario para dar soporte a un middleware de tipo RMI sobre el protocolo UDP. ¿Qué campo añade para evitar duplicados?
+a) Marca de tiempo
+b) Checksum de los datos del mensaje
+c) Identificador del mensaje
+d) Código de operación
+R: c
+E: Con un identificador único por mensaje, el receptor reconoce una petición repetida y la descarta (o reenvía la respuesta guardada). El checksum solo detecta corrupción.
+Fuente: 21/22 P1R.
+---
+T: Tema 3 - Invocación remota
+P: Elija la opción correcta sobre el proceso de serialización al comunicar dos entidades software ya existentes:
+a) Sólo se pueden comunicar entidades software implementadas en el mismo lenguaje de programación
+b) Se puede elegir entre diversos formatos de representación (binario, XML, JSON, etc.) para la implementación de la serialización.
+c) Se tiene que usar Protocol Buffers.
+d) Si la comunicación es a través de Internet se debe usar TCP.
+R: b
+E: Hay muchos formatos de serialización posibles, independientes del lenguaje de cada extremo. Protocol Buffers es solo una opción, y el transporte (TCP o UDP) es independiente del formato.
+Fuente: 21/22 P1R y 21/22 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: La definición de un protocolo indica que al recibir un mensaje «Hello» siempre hay que contestar con otro mensaje «Hello». ¿De qué aspecto de la especificación forma parte este detalle?
+a) Sintaxis.
+b) Semántica.
+c) Temporización.
+d) Otro aspecto
+R: c
+E: Indica qué mensaje sigue a cuál (el patrón de intercambio): es temporización/sincronización.
+Fuente: 21/22 P1R y 21/22 P1X.
+---
+T: Tema 3 - Invocación remota
+P: En el proceso de desarrollo de un sistema distribuido mediante RPC, ¿qué parte se genera de forma automática?
+a) La interfaz
+b) Los stubs
+c) La localización del servidor
+d) El procedimiento que realiza el trabajo en el servidor
+R: b
+E: El programador escribe la interfaz (IDL) y la implementación; el compilador de interfaces (rpcgen, slice2py, protoc…) genera los stubs.
+Fuente: 21/22 P1R.
+---
+P: ¿Qué modelo de RMI te permite no bloquear el hilo que llama y recibir un «callback» (invocación en el cliente) cuando la llamada se ha completado?
+a) Modelo asíncrono
+b) Modelo síncrono
+c) Modelo concurrente
+d) Todos los modelos lo permiten
+R: a
+E: En la invocación asíncrona el cliente no se bloquea; el resultado lo recoge con polling o a través de un callback que el middleware invoca cuando llega la respuesta.
+Fuente: 21/22 P1R.
+
+% ======================================================================
+% Curso 21/22 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Cuál es la característica principal de los sistemas distribuidos?
+a) Proporciona un reloj global sincronizado.
+b) La comunicación se realiza mediante paso de mensajes.
+c) Se utilizan lenguajes y tecnologías homogéneos.
+R: b
+E: En un SD los componentes se comunican y coordinan solo por paso de mensajes. No hay reloj global y lo normal es la heterogeneidad.
+Fuente: 21/22 P1X.
+---
+P: ¿Cuál de las siguientes definiciones sobre SSDD NO es correcta?
+a) Colección de dispositivos de cómputo que pueden comunicarse entre sí, desde un chip VLSI hasta un cluster de estaciones de trabajo.
+b) Colección de computadores autónomos conectados mediante una red, con software diseñado para producir una instalación informática integrada.
+c) Aquel sistema en el que los computadores localizados en una red comunican y coordinan sus acciones mediante paso de mensajes.
+d) Colección de dispositivos conectados a través de una red para incrementar la productividad.
+R: d
+E: a), b) y c) son definiciones de distintos autores (c es la de Coulouris). d) no habla de coordinación ni de paso de mensajes, solo de "incrementar la productividad".
+Fuente: 21/22 P1X.
+---
+T: Tema 3 - Invocación remota
+P: Su jefe le ha pedido que convierta una aplicación centralizada implementada en Java en una aplicación distribuida. Sin darle más información, ¿qué modelo le parecería más adecuado y más natural para implementar el sistema distribuido?
+a) RMI
+b) RPC
+c) Comunicación Indirecta
+d) Sockets
+R: a
+E: Java es orientado a objetos: lo natural es distribuir los objetos e invocarlos remotamente con RMI, cambiando poco el diseño original.
+Fuente: 21/22 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿Qué aspecto de la definición de un protocolo proporciona la especificación de una interfaz utilizando un lenguaje tipo IDL de un sistema distribuido?
+a) Sintaxis
+b) Sintaxis, semántica y temporización
+c) Temporización
+d) Semántica
+R: a
+E: El IDL define los tipos de las operaciones, argumentos y resultados, es decir, el formato de los mensajes: la sintaxis.
+Fuente: 21/22 P1X.
+---
+T: Tema 3 - Invocación remota
+P: Marca cuál de las siguientes afirmaciones es cierta:
+a) El protocolo de intercambio Request (R) implementa mecanismos de retransmisión y timeouts para comprobar que el mensaje de petición se ha entregado correctamente.
+b) Cuando se aplica la semántica exactly-once no deben ejecutarse operaciones idempotentes.
+c) Las invocaciones asíncronas son el modelo por defecto utilizado en middlewares RPC/RMI.
+d) El dispatcher es el componente de la aplicación cliente que se encarga de hacer el marshalling y el unmarshalling de los datos.
+R: b
+E: Respuesta oficial (por descarte). a) Falsa: R no tiene respuesta, así que no hay timeouts ni retransmisión. c) Falsa: por defecto las invocaciones son síncronas (bloqueantes). d) Falsa: el dispatcher está en el SERVIDOR y lo que hace es elegir la operación a invocar.
+Fuente: 21/22 P1X.
+---
+P: Una invocación RMI asíncrona que no necesita confiabilidad ni retorna resultado se debería implementar con el patrón de llamada:
+a) Request (R)
+b) Request-Reply (RR)
+c) Request-Reply-Ack (RRA)
+d) Con ninguno de los anteriores
+R: a
+E: Si no hay resultado y no hace falta confirmación de entrega, basta con enviar la petición (one-way): estilo R.
+Fuente: 21/22 P1X.
+---
+P: En el modelo RMI, ¿cuál de los siguientes términos identifica al objeto que se comporta como local al cliente y que implementa la misma interfaz que el «servant»?
+a) El adaptador de objetos (Object Adapter)
+b) El «skeleton»
+c) El proxy
+d) El servidor
+R: c
+E: El proxy está en el proceso cliente, implementa la misma interfaz remota que el sirviente y convierte cada llamada local en un mensaje de petición. El skeleton está en el servidor.
+Fuente: 21/22 P1X.
+
+% ======================================================================
+% Curso 20/21 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Cuál es el principal motivo por el que no se dispone de un reloj global en los sistemas distribuidos?
+a) La necesidad de mantener un buen nivel de concurrencia entre procesos.
+b) No existe tecnología para fabricar relojes con la precisión necesaria.
+c) Las limitaciones de los lenguajes de programación.
+d) La latencia impredecible de las comunicaciones.
+R: d
+E: Para sincronizar relojes hay que intercambiar mensajes, y como el tiempo que tarda un mensaje es variable e impredecible, nunca se sabe con exactitud qué hora tiene el otro nodo "ahora".
+Fuente: 20/21 P1.
+---
+P: La frase «La red es homogénea» es una falacia porque...
+a) es posible utilizar diferentes modos de codificar los mensajes.
+b) existen muchos fabricantes distintos de dispositivos de red.
+c) existen muchas tecnologías de comunicaciones diferentes.
+d) podemos usar muchos protocolos distintos.
+R: c
+E: La red está formada por tecnologías de comunicaciones muy distintas (Ethernet, WiFi, 4G/5G, fibra…), con distintas latencias, anchos de banda y fiabilidad.
+Fuente: 20/21 P1.
+---
+P: ¿Por qué los sistemas distribuidos ofrecen un buen nivel de escalabilidad?
+a) Al tratarse de sistemas multiproceso, es sencillo crear nuevos procesos cuando crece la cantidad de usuarios o peticiones.
+b) Su naturaleza descentralizada permite añadir fácilmente nuevos recursos conforme aumenta la carga de trabajo.
+c) Los sistemas distribuidos no escalan bien.
+d) Pueden crecer indefinidamente.
+R: b
+E: Al estar descentralizado, se puede añadir más nodos o recursos cuando crece la carga. OJO: en la solución oficial aparecen marcadas a) y b) (probablemente se aceptaron las dos).
+Fuente: 20/21 P1.
+---
+P: ¿Cómo gestiona un SSDD la heterogeneidad?
+a) Impide la integración de recursos heterogéneos para lograr un ecosistema homogéneo.
+b) Impide la integración de recursos homogéneos para lograr un ecosistema heterogéneo.
+c) Ofrece acceso a recursos heterogéneos presentándolos como si fueran homogéneos.
+d) Ofrece acceso a recursos homogéneos presentándolos como si fueran heterogéneos.
+R: c
+E: El SD (y su middleware) integra recursos distintos y los ofrece con una interfaz común, ocultando las diferencias.
+Fuente: 20/21 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: Suponga que realiza una implementación en Python del cliente y servidor y utiliza los métodos de serialización/deserialización para los mensajes de petición y de respuesta proporcionados por el módulo struct. ¿Cuál de las siguientes afirmaciones es FALSA?
+a) Si se modifica el formato del mensaje a enviar, es necesario modificar también el código de la aplicación cliente/servidor.
+b) El sistema es menos propenso a errores.
+c) Es más eficiente que otros formatos de representación de datos como XML o JSON.
+d) No permite desarrollo evolutivo.
+R: b
+E: Con struct se serializa a mano (struct.pack('BB', op, n)): es muy eficiente, pero cualquier cambio de formato obliga a tocar el código de ambos lados y es fácil equivocarse con el formato. Es MÁS propenso a errores.
+Fuente: 20/21 P1.
+---
+P: ¿Cuál de las siguientes alternativas de serialización permite obtener mensajes de menor tamaño?
+a) XML
+b) JSON
+c) Python struct
+d) protocol buffers
+R: c
+E: Con struct solo se envían los bytes de los valores, sin ninguna metainformación: ni nombres ni números de campo. Protocol Buffers añade una etiqueta por campo, así que ocupa algo más. XML y JSON son los más grandes.
+Fuente: 20/21 P1.
+---
+T: Tema 3 - Invocación remota
+P: Señale la opción correcta. En una invocación RPC, el proceso que llama, que hace las funciones de cliente y ejecuta el stub del cliente:
+a) Construye el mensaje de petición de invocación
+b) Deserializa los argumentos de la llamada
+c) Serializa y envía el resultado de la llamada al procedimiento local
+d) Todas las funciones anteriores son realizadas
+R: a
+E: El stub del cliente serializa los argumentos, construye y envía la petición y deserializa el resultado. Deserializar los argumentos y serializar el resultado lo hace el stub del servidor.
+Fuente: 20/21 P1.
+---
+P: ¿Qué semántica requiere en su implementación un mecanismo de ACK pero no control de duplicados?
+a) at-least-once
+b) at-most-once
+c) maybe
+d) exactly-once
+R: a
+E: at-least-once necesita saber si la petición llegó (respuesta/ACK y reintento por timeout), pero no filtra duplicados: los re-ejecuta. maybe no tiene ni ACK; at-most-once sí filtra.
+Fuente: 20/21 P1.
+---
+P: El portmapper simplifica:
+a) La vinculación cliente/servidor
+b) El intercambio de mensajes entre cliente y servidor
+c) La deserialización/serialización de argumentos
+d) La semántica de implementación
+R: a
+E: El portmapper es el binder de ONC RPC: permite al cliente encontrar en qué puerto está el servidor (vinculación o binding).
+Fuente: 20/21 P1.
+
+% ======================================================================
+% Curso 20/21 - P1R
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Qué entendemos por servicio en un sistema distribuido?
+a) Un componente gestionando un conjunto de recursos relacionados y que provee una funcionalidad a usuarios y aplicaciones.
+b) Un programa ejecutándose en un computador que acepta peticiones de otros programas a través de un API.
+c) Un conjunto de reglas que habilita la comunicación entre dos entidades.
+d) Un conjunto de operaciones o API.
+R: a
+E: Servicio: funcionalidad sobre un conjunto de recursos. b) es un servidor, c) un protocolo y d) una interfaz.
+Fuente: 20/21 P1R.
+---
+P: ¿Cuál es el principal beneficio de usar un middleware?
+a) Aumento de la productividad del equipo de programación.
+b) Por usarlo, te proporciona gestión de fallos en cualquier tipo de sistema distribuido de forma automática.
+c) Por usarlo, te proporciona gestión de la escalabilidad en cualquier tipo de sistema distribuido de forma automática.
+d) Todas las otras respuestas son correctas.
+R: a
+E: El middleware oculta los detalles de bajo nivel (sockets, serialización, heterogeneidad) y el programador se centra en la funcionalidad, así que es más productivo. No resuelve "automáticamente" los fallos ni la escalabilidad de cualquier sistema.
+Fuente: 20/21 P1R.
+---
+P: ¿Qué tipo de transparencia te proporciona una URL?
+a) Localización
+b) Concurrencia
+c) Fallo
+d) Prestaciones
+R: a
+E: Una URL usa un nombre (dominio) que no revela en qué máquina física o dirección está el recurso: transparencia de localización.
+Fuente: 20/21 P1R (y 20/21 P1X).
+---
+P: ¿Qué clases de fallos involucran al canal en un sistema distribuido?
+a) Omisión y arbitrario
+b) Arbitrario
+c) Omisión
+d) Fallo-parada
+R: a
+E: El canal puede perder mensajes (omisión) o corromperlos, duplicarlos o inventarlos (arbitrario). Fallo-parada (crash) solo afecta a procesos.
+Fuente: 20/21 P1R.
+---
+T: Tema 2 - Diseño de protocolos
+P: [Bloque] Diseñe un protocolo cliente/servidor con tres operaciones: op1 leer, op2 incrementar y op3 resetear el número de versión de un fichero.
+¿Cuál de las siguientes opciones define de manera más eficiente (mínimo mensaje necesario con el mínimo payload) la sintaxis del mensaje de petición de la operación op2? Considere que x es el número exacto de caracteres del nombre del fichero.
+a) Id. Operación (1 byte) + longitud nombre fichero (2 bytes) + nombre fichero (x bytes)
+b) Id. Operación (1 byte) + nombre fichero (512 bytes)
+c) Id. Operación (1 byte) + nombre fichero (x bytes) + carácter FIN (1 byte)
+d) Id. Operación (1 byte) + nombre fichero (x bytes) + carácter FIN (1 byte) + versión (1 byte)
+R: c
+E: Incrementar solo necesita la operación y el nombre del fichero. Delimitar el nombre con un carácter de fin cuesta 1 byte (menos que una longitud de 2). d) añade una versión que la petición no necesita y b) reserva 512 bytes fijos.
+Fuente: 20/21 P1R.
+---
+P: [Bloque] Protocolo cliente/servidor para leer, incrementar y resetear el número de versión de un fichero. Suponga que se le solicita añadir a este protocolo la característica de integridad de datos. ¿Qué campo(s) debería añadir a los mensajes para soportar dicha característica?
+a) CRC
+b) Timestamp
+c) Identificador origen/destino
+d) Versión del protocolo
+R: a
+E: Un CRC permite al receptor comprobar que el mensaje no se ha alterado en el camino (detección de errores = integridad).
+Fuente: 20/21 P1R.
+---
+P: [Bloque] Protocolo cliente/servidor para leer, incrementar y resetear el número de versión de un fichero. ¿Cuál de las siguientes opciones es la más adecuada para representar los mensajes de petición y respuesta del protocolo utilizando Google Protocol Buffers versión 3?
+a)
+```
+message VERSION {
+  enum Operation {READ=0; INC=1; RESET=2; UNKNOWN=3;}
+  Operation VersionOp = 1;
+  string filename = 2;
+}
+message RESPONSE { int32 version = 1; }
+```
+b)
+```
+message VERSION {
+  enum Operation {READ=0; INC=1; RESET=2; UNKNOWN=3;}
+  Operation VersionOp = 1;
+  string filename = 2;
+  int32 version = 3;
+}
+```
+c)
+```
+message VERSION {
+  enum Operation {READ=0; INC=1; RESET=2; UNKNOWN=3;}
+  required Operation VersionOp = 1;
+  required string filename = 2;
+  optional int version = 3;
+}
+```
+d)
+```
+message VERSION {
+  enum Operation {READ=0; INC=1; RESET=2; UNKNOWN=3;}
+  required Operation VersionOp = 1;
+  required string filename = 2;
+  required int version = 3;
+}
+```
+R: a
+E: Se piden petición Y respuesta: solo a) define los dos mensajes, y con sintaxis proto3 correcta. c) y d) usan required/optional al estilo proto2, y b) mezcla en un único mensaje la versión, que solo hace falta en la respuesta.
+Fuente: 20/21 P1R.
+---
+P: La herramienta Wireshark, cuando se usa para capturar los mensajes de un protocolo, NO puede ayudar a:
+a) Identificar errores de sintaxis de protocolo.
+b) Reducir el tamaño de los datos enviados.
+c) Verificar las entidades que comunican.
+d) Comprobar el encapsulado de los mensajes de aplicación sobre TCP/IP.
+R: b
+E: Wireshark solo observa el tráfico: sirve para ver formatos, quién habla con quién y el encapsulado, pero no cambia lo que se envía.
+Fuente: 20/21 P1R.
+---
+P: ¿Qué indica el bit más significativo (MSB) del último byte que compone el tipo varint en los buffers de protocolo de Google si este byte toma el valor '0'?
+a) El signo del número representado en ese byte.
+b) Ese byte contiene información de control.
+c) El tipo de datos representado en ese byte.
+d) Es el último byte
+R: d
+E: En un varint cada byte aporta 7 bits de valor; el MSB es el bit de continuación: 1 = sigue otro byte, 0 = este es el último. Así los números pequeños ocupan un solo byte.
+Fuente: 20/21 P1R.
+---
+T: Tema 1 - Introducción
+P: ¿Qué paradigma de comunicación se asemeja más al paso de mensajes (message passing)?
+a) cliente-servidor
+b) colas de mensajes
+c) propagación de eventos
+d) redes de pares (peer to peer)
+R: a
+E: Respuesta oficial. En el paso de mensajes, como en cliente-servidor, un proceso envía (send) directamente a otro, que recibe (receive): es comunicación directa. Las colas de mensajes y la propagación de eventos son comunicación indirecta, aunque el nombre despiste.
+Fuente: 20/21 P1R.
+---
+T: Tema 3 - Invocación remota
+P: ¿Cuál es la consecuencia principal de la semántica at-least-once en caso de error?
+a) La invocación no se realiza.
+b) Se re-ejecuta el procedimiento.
+c) Se almacena la historia de peticiones.
+d) El mensaje de respuesta indica un error.
+R: b
+E: at-least-once reintenta la petición y el servidor, al no filtrar duplicados, vuelve a ejecutar el procedimiento. Por eso solo vale para operaciones idempotentes. La historia es cosa de at-most-once.
+Fuente: 20/21 P1R.
+---
+P: ¿A qué se refiere el concepto binding al realizar una invocación RPC?
+a) Al proceso que el cliente utiliza para localizar el servidor RPC.
+b) Al protocolo de bajo nivel que utiliza el cliente para codificar la petición.
+c) A la necesidad de almacenar en memoria del servidor los parámetros recibidos.
+d) Al proceso que convierte los datos que maneja la aplicación en secuencias de bytes serializables.
+R: a
+E: Binding (vinculación): averiguar dónde está el servidor (dirección y puerto) para poder invocarlo, normalmente preguntando al binder. d) es la serialización.
+Fuente: 20/21 P1R.
+
+% ======================================================================
+% Curso 20/21 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: En un sistema distribuido, ¿qué práctica resuelve el problema de la heterogeneidad?
+a) El uso de sistemas abiertos y estándares
+b) El uso de APIs binarias
+c) La comunicación indirecta
+d) El uso de APIs RMI
+R: a
+E: Con estándares abiertos y especificaciones públicas, sistemas distintos pueden interoperar.
+Fuente: 20/21 P1X.
+---
+P: ¿En qué se diferencian los patrones arquitecturales de diseño por capas (layering) del diseño por niveles (tiered architecture)?
+a) Ambos son lo mismo.
+b) El diseño por niveles incluye el software y el hardware con funciones específicas. El diseño por capas se refiere solo al software.
+c) El diseño por capas se refiere sólo al software. El diseño por niveles sólo implica hardware.
+d) El diseño por niveles es solo para el middleware y el por capas solo para la base de datos.
+R: b
+E: Capas (layering): organización lógica del software, donde cada capa usa los servicios de la de abajo. Niveles (tiers): reparto de funciones entre máquinas/procesos (p. ej., presentación – lógica – datos), así que implica software y hardware.
+Fuente: 20/21 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: Se encuentra diseñando el protocolo binario para dar soporte a un middleware de tipo RMI sobre el protocolo UDP. ¿Qué serialización de las estructuras de datos ocupa un menor número de bytes en sus mensajes?
+a) XML
+b) JSON
+c) BSON
+d) YAML
+R: c
+E: BSON (Binary JSON) es una codificación binaria; XML, JSON y YAML son formatos de texto.
+Fuente: 20/21 P1X.
+---
+P: Se encuentra diseñando el protocolo binario para dar soporte a un middleware de tipo RMI sobre UDP. Un compañero le pasa un diagrama de secuencia UML con las invocaciones y argumentos de llamada entre entidades del sistema, y además un documento tipo RFC explicando dicho diagrama. Este documento le ayuda a especificar la:
+a) Temporización.
+b) Sintaxis
+c) Semántica
+d) Sintaxis, semántica y temporización
+R: d
+E: El diagrama de secuencia da el orden de los mensajes (temporización), los argumentos dan el formato (sintaxis) y la explicación de la RFC da el significado (semántica).
+Fuente: 20/21 P1X.
+---
+P: ¿Cuál de los siguientes campos añade de forma automática el compilador de Protocol Buffers a su estructura definida al serializarla?
+a) CRC
+b) Marca de tiempo
+c) Identificador del tipo de mensaje
+d) No se añade ninguno de los indicados
+R: d
+E: Protocol Buffers solo codifica los campos que tú defines (con su número de campo). No añade CRC, ni marca de tiempo, ni el tipo de mensaje: si los quieres, tienes que definirlos.
+Fuente: 20/21 P1X.
+---
+T: Tema 3 - Invocación remota
+P: ¿Qué patrón de llamada NO es adecuado para implementar una invocación RMI confiable?
+a) Request (R)
+b) Request-Reply (RR)
+c) Request-Reply-Ack (RRA)
+d) Ninguno de los anteriores
+R: a
+E: Con R no hay respuesta, así que el cliente nunca sabe si la petición llegó: no puede reintentar ni garantizar nada.
+Fuente: 20/21 P1X.
+---
+P: Un proceso A invoca, mediante un mecanismo RPC, una función en el proceso B en otra máquina con un argumento x. La invocación puede retornar un código de error. En esta comunicación:
+a) La serialización (marshalling) y la des-serialización (unmarshalling) del argumento x se realiza tanto en A como en B.
+b) La serialización del argumento x se realiza en B y la des-serialización se realiza en A.
+c) La serialización del valor de retorno se realiza en B y la des-serialización se realiza en A.
+d) A es el servidor y B es el cliente.
+R: c
+E: El valor de retorno viaja de B (servidor) a A (cliente): B lo serializa y A lo deserializa. El argumento x lo serializa A y lo deserializa B, no los dos.
+Fuente: 20/21 P1X.
+
+% ======================================================================
+% Curso 19/20 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Qué tres características tienen la mayoría de los sistemas distribuidos en la actualidad?
+a) Procesos concurrentes, fallos independientes y ausencia de reloj global.
+b) Procesos concurrentes, fiabilidad en las comunicaciones y ausencia de reloj global.
+c) Procesos concurrentes, sin latencia en las comunicaciones y ausencia de reloj global.
+d) Procesos concurrentes, con seguridad a nivel de red y ausencia de reloj global.
+R: a
+E: Concurrencia, fallos independientes y ausencia de reloj global. Las demás opciones meten falacias (red fiable, latencia cero, red segura).
+Fuente: 19/20 P1.
+---
+P: Un compañero de trabajo le informa de que hay que introducir seguridad en un sistema distribuido que están implementando. ¿Qué aspectos debe tener en cuenta para empezar a diseñar/implementar la seguridad?
+a) Garantizar la confidencialidad, integridad y disponibilidad.
+b) A nivel de sistema distribuido, garantizar la disponibilidad del sistema.
+c) El uso de comunicaciones cifradas a nivel de red.
+d) Garantizar la confidencialidad en el acceso al sistema distribuido.
+R: a
+E: La seguridad tiene tres componentes (CIA): confidencialidad, integridad y disponibilidad. Las otras opciones solo cubren una parte.
+Fuente: 19/20 P1.
+---
+P: En su proceso de selección de un middleware de comunicaciones, ¿qué debe tener en cuenta?
+a) El número de sistemas operativos y lenguajes de programación a los que ha sido portado.
+b) El grado de soporte a las características no funcionales del sistema distribuido a construir.
+c) El número de servicios horizontales (persistencia, eventos, etc.)
+d) El modelo de seguridad que implemente.
+R: b
+E: El middleware debe cubrir los requisitos no funcionales del sistema concreto que vas a construir (fiabilidad, rendimiento, seguridad, escalabilidad…). Los demás criterios son parciales o dependen del caso.
+Fuente: 19/20 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: Se pretende diseñar un protocolo cliente/servidor para controlar varios LEDs de un edificio de manera remota. Las operaciones posibles sobre un LED son ON (encender) y OFF (apagar). Seleccione la sintaxis más adecuada:
+a) Request = | ID PROTO (1 B) | ID LED (1 B) | ID OPERACION (1 B) |   Reply = | COD. ERROR (1 B) | ID LED (1 B) |
+b) Request = | ID PROTO (1 B) | ID LED (1 B) | PAYLOAD LENGTH (1 B) | CRC (2 B) |   Reply = | COD. ERROR (1 B) | ID LED (1 B) |
+c) Request = | SERVER IP (4 B) | SERVER PORT (2 B) | ID PROTO (1 B) | ID LED (1 B) |   Reply = | CLIENT IP (4 B) | CLIENT PORT (2 B) | ERROR CODE (1 B) | ID LED (1 B) |
+d) Request = | SERVER IP (4 B) | SERVER PORT (2 B) | TCP/UDP (1 B) | ID PROTO (1 B) | ID LED (4 B) |   Reply = | CLIENT IP (4 B) | CLIENT PORT (2 B) | ERROR CODE (1 B) | ID LED (4 B) |
+R: a
+E: La petición necesita decir qué LED y qué operación (ON/OFF); b), c) y d) ni siquiera incluyen la operación. Además, IP, puerto y protocolo de transporte son cosa de las capas inferiores, no del mensaje de aplicación.
+Fuente: 19/20 P1.
+---
+P: Se pretende diseñar un protocolo extensible que permita añadir nuevas operaciones en el futuro, por ejemplo, obtener/fijar la intensidad de luz en un determinado LED. ¿Qué campo debería añadir a la cabecera para lograrlo?
+a) Código de redundancia cíclica (CRC)
+b) Número de secuencia
+c) Longitud del payload
+d) Versión del protocolo
+R: d
+E: Con un campo de versión, el receptor sabe qué formato y qué operaciones esperar, y se puede hacer evolucionar el protocolo sin romper a los clientes antiguos.
+Fuente: 19/20 P1.
+---
+P: [Bloque] Se extiende el protocolo de LEDs con dos operaciones nuevas: GET() devuelve la intensidad de luz que emite un LED y PUT(value) la fija al valor value. Se decide representar los mensajes utilizando Google Protocol Buffers versión 2. Seleccione la opción más adecuada para representar los mensajes de petición de operación:
+a)
+```
+message LED {
+  enum Operation {ON=0; OFF=1; GET=2; PUT=3; UNKNOWN=4;}
+  required int version = 1;
+  required Operation LedOperation = 2;
+  required int IdLed = 3;
+  optional float value = 4;
+}
+```
+b)
+```
+message LED {
+  enum Operation {ON=0; OFF=1; GET=2; PUT=3; UNKNOWN=4;}
+  required Operation LedOperation = 1;
+  required int IdLed = 2;
+  optional float value = 3;
+  optional float response = 4;
+}
+```
+c)
+```
+message LED {
+  enum Operation {ON=0; OFF=1; GET=2; PUT=3; UNKNOWN=4;}
+  required Operation LedOperation = 1;
+  required int IdLed = 2;
+  required float value = 3;
+}
+```
+d)
+```
+message LED {
+  enum Operation {ON=0; OFF=1; GET=2; PUT=3; UNKNOWN=4;}
+  required Operation LedOperation = 1;
+  required int IdLed = 2;
+  optional float value = 3;
+}
+```
+R: d
+E: Toda petición lleva operación y LED (required); value solo lo usa PUT, así que debe ser optional (en c sería obligatorio también para ON/OFF/GET). La respuesta no pinta nada en la petición (b), y el número de versión no hace falta en protobuf (a), porque los números de campo ya permiten evolucionar el mensaje.
+Fuente: 19/20 P1.
+---
+P: [Bloque] Protocolo de LEDs con Protocol Buffers. ¿Qué método utilizará para deserializar un mensaje LED instanciado mediante myLed = Led()?
+a) myLed.unpack()
+b) myLed.ntohs()/myLed.ntohl()
+c) myLed.SerializeToString()
+d) myLed.ParseFromString()
+R: d
+E: En la API de protobuf para Python, SerializeToString() serializa a bytes y ParseFromString(datos) rellena el objeto a partir de los bytes (deserializa). unpack es del módulo struct.
+Fuente: 19/20 P1.
+---
+T: Tema 3 - Invocación remota
+P: La «computación huérfana» sucede cuando...
+a) un cliente no encuentra el servidor adecuado que debe invocar.
+b) un servidor RPC no dispone del procedimiento solicitado por el cliente.
+c) un servidor continúa ejecutando el código de un procedimiento a pesar de que el cliente haya desaparecido.
+d) ocurre un fallo en el servidor que le impide devolver el resultado de un procedimiento RPC.
+R: c
+E: Computación huérfana: el cliente que pidió la operación ha caído, pero el servidor sigue trabajando para nadie.
+Fuente: 19/20 P1.
+---
+P: ¿Para qué sirve el programa portmapper?
+a) Es un enlazador (binder) para localizar servidores RPC.
+b) Lista todos los servidores RPC disponibles en la red.
+c) Genera los stubs a partir de una especificación XDR.
+d) Permite averiguar la dirección de los clientes de un servidor RPC concreto.
+R: a
+E: El portmapper es el binder de ONC (Sun) RPC: traduce (programa, versión) al puerto del servidor en esa máquina. Los stubs los genera rpcgen.
+Fuente: 19/20 P1.
+---
+P: ¿Cuál es la relación entre el tiempo de respuesta de una llamada a un procedimiento en el mismo espacio de memoria de un proceso y el de una llamada mediante un mecanismo RPC?
+a) La llamada RPC es siempre considerablemente más lenta.
+b) Si el destino está en el mismo computador, no hay ninguna diferencia apreciable.
+c) Si el destino está en la misma LAN, no hay ninguna diferencia apreciable.
+d) Dependiendo de la tecnología RPC, puede variar entre 1 a 1000 veces más rápida.
+R: a
+E: Una RPC implica serializar, pasar por el SO y la red (o loopback), deserializar y despachar: órdenes de magnitud más lenta que una llamada local, incluso en la misma máquina.
+Fuente: 19/20 P1.
+---
+P: ¿Qué tipo de herencia permiten las interfaces remotas que el programador define cuando utiliza un middleware RMI?
+a) De interfaz
+b) De implementación (única)
+c) De implementación (múltiple)
+d) No suelen soportar herencia
+R: a
+E: Las interfaces remotas (en un IDL como Slice) pueden heredar de otras interfaces. La implementación depende del lenguaje de cada sirviente, así que el IDL no puede imponer herencia de implementación.
+Fuente: 19/20 P1.
+
+% ======================================================================
+% Curso 19/20 - P1R
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Un sistema distribuido es capaz de proporcionar un servicio con buen rendimiento a 100 usuarios utilizando n recursos. A lo largo del tiempo, el número de usuarios que accede al servicio se ha duplicado. ¿Cuántos recursos serían necesarios para que el sistema se pueda considerar escalable?
+a) n
+b) 2n
+c) 100
+d) 200
+R: b
+E: Escalable: el coste en recursos crece como mucho de forma lineal, O(n), con el número de usuarios. El doble de usuarios con el doble de recursos (2n) mantiene el rendimiento.
+Fuente: 19/20 P1R.
+---
+P: ¿De qué debemos ocuparnos si buscamos la confidencialidad en las comunicaciones?
+a) De maximizar el tiempo en que el recurso está accesible.
+b) De proteger los datos frente a accesos no autorizados.
+c) De la corrupción o alteración de los datos.
+d) De la consistencia de las réplicas.
+R: b
+E: Confidencialidad = que solo accedan los autorizados. a) es disponibilidad y c) integridad.
+Fuente: 19/20 P1R.
+---
+P: Indique cuál de las siguientes opciones de programación de SSDD proporciona, asumiendo los mismos requisitos de usuario, un mejor rendimiento:
+a) sockets
+b) Protocol buffers
+c) RPC
+d) Sistema publish-subscribe
+R: a
+E: Los sockets son el nivel más bajo: sin capas intermedias (stubs, brokers, serialización genérica). Se puede ajustar todo a mano, a costa de mucho más trabajo.
+Fuente: 19/20 P1R.
+---
+T: Tema 2 - Diseño de protocolos
+P: ¿En qué aspectos de la implementación de un protocolo nos podría ayudar el módulo struct de Python?
+a) semántica y sintaxis
+b) sintaxis y temporización
+c) solo con la sintaxis
+d) solo con la semántica
+R: c
+E: struct empaqueta y desempaqueta valores en bytes con un formato dado: ayuda a implementar el formato de los mensajes (sintaxis), nada más.
+Fuente: 19/20 P1R.
+---
+P: ¿Cuál de los siguientes campos es, a priori, inadecuado para un mensaje del nivel de aplicación?
+a) El puerto UDP del cliente.
+b) Un identificador de recurso.
+c) Una marca de tiempo obtenida en el emisor.
+d) El código de error de la última operación solicitada.
+R: a
+E: El puerto UDP ya va en la cabecera de la capa de transporte; repetirlo en el mensaje de aplicación mezcla capas. Los demás campos sí tienen sentido en la aplicación.
+Fuente: 19/20 P1R.
+---
+T: Tema 3 - Invocación remota
+P: ¿Qué semántica requiere filtrado de duplicados en la recepción de invocaciones?
+a) At-most-once
+b) At-least-once
+c) Maybe
+d) Ninguna semántica requiere de filtrado de duplicados
+R: a
+E: at-most-once filtra duplicados para no ejecutar dos veces la misma petición (y retransmite la respuesta guardada).
+Fuente: 19/20 P1R.
+---
+P: Dado un método de una clase person, el método search(dni), que se utilizará como parte de una interfaz de un sistema distribuido RMI. El jefe de proyecto le encarga la funcionalidad efectiva de buscar en la base de datos a partir del DNI proporcionado. ¿Qué le está pidiendo que implemente?
+a) El proxy
+b) El adaptador de objetos
+c) El servant
+d) El skeleton
+R: c
+E: La lógica real del método (buscar en la base de datos) va en el sirviente. Proxy y skeleton los genera el compilador de interfaces y el adaptador lo proporciona el middleware.
+Fuente: 19/20 P1R.
+
+% ======================================================================
+% Curso 19/20 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: [Bloque] Una empresa nos encarga el diseño de un sistema de ficheros distribuido compuesto por N servidores donde se almacenarán las copias de los ficheros. Los clientes deberán acceder a los ficheros remotos a través de una interfaz similar a la interfaz de acceso a ficheros en local.
+¿Cuál de las siguientes características de un sistema distribuido proporciona esta funcionalidad?
+a) Transparencia de concurrencia.
+b) Transparencia de replicación.
+c) Transparencia de localización.
+d) Transparencia de acceso.
+R: d
+E: Acceder a lo remoto con las mismas operaciones que a lo local es transparencia de ACCESO.
+Fuente: 19/20 P1X.
+---
+P: [Bloque] Sistema de ficheros distribuido con N servidores que guardan copias de los ficheros. Un posible diseño es un pool de servidores, donde 1 servidor front-end (coordinador) recibe todas las peticiones sobre ficheros y las redirige a cualquiera de los N-1 servidores que almacenan las copias. Sin embargo, se prevé que un número de peticiones muy grande al front-end pueda reducir el rendimiento del sistema. ¿Cómo se denomina esta característica del sistema distribuido?
+a) Tolerancia a fallos
+b) Coherencia
+c) Escalabilidad
+d) Disponibilidad
+R: c
+E: Que el rendimiento caiga al crecer la carga es un problema de escalabilidad; el coordinador único es un cuello de botella.
+Fuente: 19/20 P1X.
+---
+P: [Bloque] Sistema de ficheros con un único front-end (coordinador) que reparte las peticiones entre N-1 servidores de copias, y que se convierte en cuello de botella. ¿De qué manera NO podría resolverse esta pérdida de rendimiento?
+a) Incrementando el número de servidores que almacenan copias de ficheros
+b) Incrementando el número de front-ends y distribuyendo las peticiones entre ellos
+c) Diseñando un modelo arquitectural más distribuido, que no incluya un único coordinador.
+d) Incrementando los recursos de cómputo del front-end de manera proporcional al número de peticiones
+R: a
+E: El cuello de botella es el front-end, por el que pasan TODAS las peticiones. Añadir servidores de copias detrás no lo alivia; las otras tres opciones sí actúan sobre el coordinador.
+Fuente: 19/20 P1X.
+---
+P: [Bloque] Sistema de ficheros distribuido con N servidores que guardan copias. Se desea implementar un modelo de consistencia fuerte, en el que todos los servidores mantienen siempre copias actualizadas de ficheros. ¿Qué tipo de consistencia se necesita garantizar?
+a) Coherencia de concurrencia
+b) Coherencia de cachés
+c) Coherencia ante fallos
+d) Coherencia de replicación
+R: d
+E: Las copias de los ficheros en los distintos servidores son réplicas: mantenerlas iguales es consistencia (coherencia) de replicación.
+Fuente: 19/20 P1X.
+---
+P: [Bloque] Sistema de ficheros distribuido. Se necesita hacer que este sistema pueda ser implementado y extendido en múltiples formas. ¿Cómo se denomina esta característica de un sistema distribuido?
+a) Heterogeneidad
+b) Sistemas abiertos
+c) Disponibilidad
+d) Accesibilidad
+R: b
+E: Apertura (sistemas abiertos): el sistema puede extenderse y reimplementarse de varias formas gracias a interfaces publicadas y documentadas.
+Fuente: 19/20 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: Una compañía usa Protocol Buffers (versión 2) para codificar los mensajes de su protocolo de tráfico y decide añadir una marca de tiempo a los mensajes ya definidos. Si esta funcionalidad se quiere implementar de manera que los cambios en las aplicaciones que usan el mensaje sean mínimos, ¿cuál sería la mejor opción?
+a) Se necesita añadir un campo required int32 timestamp = 8 como último campo del mensaje
+b) Se necesita añadir una nueva versión del mensaje, por ejemplo OneDatav2.
+c) Sólo sería posible implementarlo en la versión 2 de los buffers del protocolo.
+d) No se puede implementar esta funcionalidad con los buffers de protocolo de Google.
+R: a
+E: Respuesta oficial: basta con añadir un campo nuevo con un número de campo no usado; protobuf está pensado para evolucionar así, sin crear mensajes nuevos. (Matiz: en la práctica, un campo nuevo suele declararse optional para que los mensajes antiguos sigan siendo válidos.)
+Fuente: 19/20 P1X.
+---
+T: Tema 3 - Invocación remota
+P: ¿Qué semántica de invocación es la más adecuada (funcionalidad correcta al mínimo coste) para la notificación de un aviso de intrusión en un sistema de seguridad física de un edificio?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) exactly-once
+R: b
+E: El aviso NO puede perderse, así que hay que reintentar. Recibirlo dos veces no es grave (avisar dos veces de la misma intrusión no cambia nada), así que no hace falta filtrar duplicados.
+Fuente: 19/20 P1X.
+---
+P: ¿Cuál de los siguientes se podría considerar un ejemplo de computación «huérfana»?
+a) Una cámara de vigilancia envía a un servicio de reconocimiento de caras una imagen al detectar erróneamente movimiento en el interior de una habitación.
+b) Una aplicación web ejecutándose en un navegador solicita a un servidor web la generación de un documento .pdf a partir de un documento .doc alojado en el servidor, pero el documento está corrupto.
+c) Una app en un smartphone envía un fragmento de audio a un servidor para averiguar el autor de una canción, pero el móvil se queda sin batería antes de recibir la respuesta.
+d) Un sensor de temperatura defectuoso envía medidas incorrectas que provoca una temperatura incorrecta de un depósito de agua que incorpora una bomba de calor controlada por un computador.
+R: c
+E: El cliente (el móvil) desaparece después de enviar la petición y el servidor sigue procesándola para nadie.
+Fuente: 19/20 P1X.
+
+% ======================================================================
+% Curso 18/19 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: En la siguiente definición de sistema distribuido, ¿qué palabras faltan?
+«Un sistema distribuido es una colección de computadores autónomos (1) ______ mediante una red, con software diseñado para producir una instalación informática (2) ______».
+a) (1) conectados, (2) integrada.
+b) (1) aislados, (2) segura.
+c) (1) conectados, (2) segura.
+d) (1) aislados, (2) integrada.
+R: a
+E: «…computadores autónomos CONECTADOS mediante una red, con software diseñado para producir una instalación informática INTEGRADA». Ojo: otra pregunta pide justo por qué esta definición está incompleta (no menciona el paso de mensajes).
+Fuente: 18/19 P1.
+---
+P: Marque la afirmación FALSA:
+a) Un servidor (proceso) puede proporcionar varios servicios.
+b) Los sistemas distribuidos están formados por redes de computadores heterogéneos.
+c) El objetivo final y principal de un sistema distribuido es el alto rendimiento y alta productividad.
+d) El objetivo final y principal de un sistema distribuido es el compartir recursos.
+R: c
+E: El objetivo principal de un SD es compartir recursos. El alto rendimiento es el objetivo de la computación paralela.
+Fuente: 18/19 P1 (y 17/18 P1X, que pregunta el objetivo principal: compartir recursos).
+---
+P: «La probabilidad de que un sistema funcione durante un periodo de tiempo» es la definición de:
+a) Fiabilidad
+b) Consistencia
+c) Seguridad
+d) Integridad
+R: a
+E: Fiabilidad (reliability): probabilidad de que el sistema funcione correctamente durante un periodo dado. No confundir con disponibilidad (fracción del tiempo en que está operativo).
+Fuente: 18/19 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: Su equipo de programadores está diseñando un protocolo sobre UDP para conectar máquinas expendedoras de café con la central de gestión de suministros. Le indican que existe un problema: a veces se envía un mensaje desde una máquina expendedora y llega dos veces a la central, lo que origina dos pedidos. ¿Qué haría usted para resolver este problema de la duplicidad?
+a) Como es imposible que eso suceda, mando revisar el código de las máquinas expendedoras porque seguro que están enviando dos mensajes en lugar de uno.
+b) Introduzco un campo en cada mensaje del protocolo que identifique unívocamente cada mensaje dentro del sistema distribuido.
+c) Hago que implementen un mecanismo de ACK para que si la máquina expendedora recibe dos ACK, envíe un mensaje indicando que sólo ha enviado un mensaje.
+d) Introduzco un campo CRC en cada mensaje del protocolo que evita que se originen duplicados en la red.
+R: b
+E: Con un identificador único por mensaje, la central detecta que ya procesó ese pedido y descarta la copia. UDP sí puede entregar duplicados, y un CRC solo detecta corrupción.
+Fuente: 18/19 P1.
+---
+P: ¿Cuál de los siguientes formatos de serialización resulta más eficiente en términos de ancho de banda?
+a) JSON
+b) XML
+c) RPC
+d) Binario
+R: d
+E: Un formato binario ocupa menos que los textuales (JSON, XML). RPC no es un formato de serialización.
+Fuente: 18/19 P1.
+---
+T: Tema 3 - Invocación remota
+P: ¿En qué componente de una aplicación RMI se crean normalmente las instancias de los objetos distribuidos?
+a) En el servidor.
+b) En el stub o esqueleto del servidor.
+c) En el stub del cliente.
+d) Las instancias no las crea el programador.
+R: a
+E: El código del servidor (escrito por el programador) crea los sirvientes y los registra en el adaptador de objetos. Los stubs no crean objetos.
+Fuente: 18/19 P1.
+
+% ======================================================================
+% Curso 17/18 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: En un sistema distribuido asíncrono:
+a) Todas las primitivas de envío y recepción que tienen lugar entre procesos son asíncronas.
+b) No hay garantías sobre los tiempos de ejecución de los procesos, ni sobre los tiempos de transmisión de mensajes.
+c) Existen garantías sobre las desviaciones que sufren los relojes internos.
+d) Todas las primitivas de envío y recepción que tienen lugar entre procesos son bloqueantes.
+R: b
+E: Modelo de interacción: un SD asíncrono no hace ninguna suposición temporal (ni sobre velocidad de ejecución, ni sobre retardo de mensajes, ni sobre deriva de relojes). "Asíncrono" aquí no se refiere a si las primitivas bloquean.
+Fuente: 17/18 P1.
+---
+P: Un modelo de fallos de un sistema distribuido permite representar:
+a) Los posibles riesgos de seguridad del sistema para diseñar sistemas distribuidos robustos.
+b) Los posibles fallos de comunicación y de ejecución de procesos del sistema para diseñar sistemas tolerantes a fallos.
+c) Los componentes arquitectónicos del sistema y sus relaciones para diseñar la arquitectura del sistema.
+d) La historia de fallos que ocurrieron en la ejecución del sistema distribuido.
+R: b
+E: El modelo de fallos clasifica cómo pueden fallar procesos y canales (omisión, arbitrarios, temporización) para poder diseñar sistemas que los toleren. a) es el modelo de seguridad y c) el modelo arquitectónico.
+Fuente: 17/18 P1.
+---
+P: Una empresa nos encarga el diseño de una aplicación distribuida con el requisito de transparencia de prestaciones. ¿Cuál de las siguientes soluciones sería la más adecuada?
+a) Un sistema distribuido que permita balancear la carga en función del número de clientes.
+b) Un sistema paralelo para obtener alto rendimiento y optimizar la productividad.
+c) Un sistema que oculte al usuario los fallos de ejecución.
+d) Un sistema distribuido con múltiples réplicas.
+R: a
+E: Transparencia de prestaciones: el sistema se reconfigura (p. ej., balanceando la carga) para mantener el rendimiento cuando varía la carga, sin que el usuario lo note. c) es transparencia de fallos y d) de replicación.
+Fuente: 17/18 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: En un sistema distribuido donde varios dispositivos utilizan una red inalámbrica de pago por byte transmitido, ¿qué tipo de serialización de datos optaría por utilizar para minimizar costes?
+a) HTTP
+b) XML
+c) SOAP
+d) XDR
+R: d
+E: XDR (eXternal Data Representation, la de Sun RPC) es una representación binaria compacta. XML y SOAP (que va sobre XML) son textuales y voluminosos; HTTP es un protocolo, no un formato de serialización.
+Fuente: 17/18 P1.
+
+% ======================================================================
+% Curso 17/18 - P1R
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Qué mecanismo de comunicación es el más eficiente y a la vez el más propenso a errores?
+a) RPC
+b) Sockets
+c) RMI
+R: b
+E: Los sockets son el nivel más bajo: sin capas intermedias (eficiente), pero el programador lo hace todo a mano (protocolo, serialización, errores), con lo que es fácil equivocarse.
+Fuente: 17/18 P1R.
+---
+P: ¿Cuál de los siguientes modelos encaja en la definición de sistema distribuido?
+a) Memoria compartida.
+b) Cliente-servidor.
+c) Ninguna de las dos.
+R: b
+E: En cliente-servidor los procesos se comunican por paso de mensajes, como exige la definición de SD. La memoria compartida no lo cumple.
+Fuente: 17/18 P1R.
+---
+T: Tema 2 - Diseño de protocolos
+P: Marca la afirmación correcta sobre un diagrama de estados de un protocolo:
+a) Permite representar la secuencia de los estados por la que transita el software del cliente.
+b) Define la temporización de los mensajes del protocolo.
+c) Define el conjunto de posibles estados del protocolo y las transiciones entre los mismos.
+R: c
+E: Un diagrama de estados del protocolo muestra en qué estados puede estar cada entidad y qué mensajes o eventos provocan cada transición. Es del protocolo, no solo del cliente.
+Fuente: 17/18 P1R.
+---
+T: Tema 3 - Invocación remota
+P: La afirmación «Los middlewares RPC se implementan sobre la capa de sockets» es:
+a) Correcta
+b) Falsa
+R: a
+E: RPC (capa superior del middleware) usa sockets UDP o TCP (capa inferior, primitivas IPC) para enviar las peticiones y respuestas.
+Fuente: 17/18 P1R.
+
+% ======================================================================
+% Curso 17/18 - P1X
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Indica cuál de las siguientes frases es correcta:
+a) Un servicio puede proporcionar varios servidores.
+b) Un servidor es accedido a través de un conjunto de operaciones que exporta.
+c) Un servicio solo puede ser proporcionado por un protocolo.
+d) Un servidor no puede proporcionar varios servicios.
+R: b
+E: Se accede al servidor solo a través de su interfaz (las operaciones que exporta). Es al revés que en a): un servidor puede proporcionar varios servicios (d también es falsa).
+Fuente: 17/18 P1X.
+---
+T: Tema 2 - Diseño de protocolos
+P: En el diseño de un protocolo para el control remoto de un avión no tripulado se desea evitar procesar mensajes duplicados (que llegan dos veces al avión) e introducir un ACK por mensaje recibido. Su equipo de desarrolladores le propone estas alternativas. ¿Cuál cree que es la más adecuada?
+a) Añadir un timestamp a cada mensaje.
+b) Añadir un identificador a cada mensaje.
+c) Añadir la longitud del mensaje al propio mensaje.
+d) Añadir un CRC al final del mensaje.
+R: b
+E: Un identificador por mensaje permite descartar duplicados y saber a qué mensaje corresponde cada ACK.
+Fuente: 17/18 P1X.
+---
+T: Tema 3 - Invocación remota
+P: En RPC, ¿qué semántica de invocación no requiere ACK?
+a) maybe
+b) at-least-once
+c) at-most-once
+d) exactly-once
+R: a
+E: maybe no confirma nada: se envía la petición y no se reintenta. Las demás necesitan saber si llegó (respuesta o ACK) para reintentar.
+Fuente: 17/18 P1X.
+---
+P: La funcionalidad de los middleware de RMI (ej. CORBA) se suele construir sobre protocolos de tipo:
+a) Request
+b) Request-Reply
+c) Request-Reply-Ack
+d) Request-Ack-Reply-Ack
+R: b
+E: La invocación remota típica es petición-respuesta (RR): la respuesta hace de ACK de la petición y lleva el resultado.
+Fuente: 17/18 P1X.
+---
+P: ¿Qué modelo de invocación puede causar más problemas de escalabilidad?
+a) Estático.
+b) Asíncrono.
+c) Síncrono.
+d) Ninguno de los anteriores.
+R: c
+E: En la invocación síncrona cada cliente (o hilo) se queda bloqueado esperando la respuesta, lo que limita cuántas peticiones simultáneas se pueden atender con los recursos disponibles.
+Fuente: 17/18 P1X.
+---
+P: En RMI, la implementación del servidor propiamente dicha se realiza en el:
+a) servant o sirviente
+b) proxy
+c) stub
+d) skeleton
+R: a
+E: El sirviente contiene la implementación real de los métodos de la interfaz. Proxy y stub están en el cliente y el skeleton solo deserializa y despacha.
+Fuente: 17/18 P1X.
+
+% ======================================================================
+% Curso 15/16 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: Complete la frase con la opción más adecuada. Un sistema de publicación-suscripción es un ejemplo del paradigma de comunicación de:
+a) invocación remota
+b) comunicación indirecta
+c) RPC
+d) RMI
+R: b
+E: En publicación-suscripción los emisores publican eventos en un intermediario sin conocer a los receptores: comunicación indirecta (desacoplada en espacio y a menudo en tiempo).
+Fuente: 15/16 P1.
+---
+P: En una red, cuya pila de protocolos ha diseñado e implementado usted, pone a prueba un sistema distribuido también implementado por usted. Todo el sistema está implementado en C y los tests realizados en local funcionan correctamente sobre distintos sistemas operativos. Sin embargo, los primeros tests del mecanismo de RPC no funcionan cuando se ejecuta remotamente. Con Wireshark se ha comprobado que las invocaciones se traducen en mensajes de la red de forma correcta y que los mensajes se envían y reciben correctamente entre las entidades correctas. Sin embargo, no se recibe ninguna respuesta. ¿Cuál de los siguientes errores podría ser la causa?
+a) Es un problema de «referencias universales».
+b) Es un problema de «language binding».
+c) Es un problema de «representación canónica».
+d) Podría ser causado por cualquiera de los anteriores.
+R: c
+E: Los mensajes llegan a quien deben (no es de referencias) y todo está en C (no es de language binding). Lo que falla al pasar a máquinas distintas es la representación de los datos (p. ej., endianness diferente): falta una representación canónica común.
+Fuente: 15/16 P1.
+
+% ======================================================================
+% Curso 14/15 - P1
+% ======================================================================
+---
+T: Tema 1 - Introducción
+P: ¿Cuál es FALSA en relación al concepto de sistema distribuido?
+a) Los elementos se encuentran en nodos de una red de computadores
+b) Involucra algún tipo de software para realizar una tarea integrada
+c) Los elementos que lo constituyen se coordinan únicamente mediante mensajes
+d) Se sincronizan por medio de un reloj físico común
+R: d
+E: En un SD NO hay reloj global común: es una de sus características.
+Fuente: 14/15 P1.
+---
+P: Marca los tres condicionantes que caracterizan a los sistemas distribuidos.
+a) Tiempo real
+b) Ausencia de un reloj global
+c) Concurrencia
+d) Fallos independientes
+R: b, c, d
+E: Concurrencia, ausencia de reloj global y fallos independientes. "Tiempo real" no tiene nada que ver.
+Fuente: 14/15 P1.
+---
+P: Marca la afirmación FALSA en cuanto al concepto de servicio:
+a) La única forma de acceso es por medio de un conjunto de operaciones bien definidas
+b) Se ejecuta siempre en el lado del cliente
+c) Gestiona uno o más recursos relacionados
+d) Un servidor proporciona uno o más servicios
+R: b
+E: El servicio lo implementa el servidor; el cliente solo lo usa a través de la interfaz.
+Fuente: 14/15 P1.
+---
+T: Tema 3 - Invocación remota
+P: En un middleware RPC, indique el orden en el cual se realizan las siguientes acciones para una invocación a procedimiento remoto.
+a) Invocación a proxy, marshalling, invocación al servant, unmarshalling, respuesta del proxy
+b) Invocación a stub, marshalling, unmarshalling, ejecución del procedimiento, marshalling, unmarshalling, respuesta del stub
+c) Invocación a stub, marshalling, invocación al cliente, marshalling, unmarshalling, respuesta del stub
+d) Marshalling, ejecución del procedimiento, unmarshalling, envío de la respuesta
+R: b
+E: Cliente: llama al stub, que serializa los argumentos. Servidor: deserializa, ejecuta el procedimiento y serializa el resultado. Cliente: deserializa el resultado y el stub retorna. Hay dos serializaciones y dos deserializaciones.
+Fuente: 14/15 P1.
+---
+P: Está usted diseñando un sistema distribuido para conectar las sucursales de un banco con la central a través de Internet. Va a usar RPC y está decidiendo qué semántica utilizará en las operaciones. ¿Qué semántica es técnicamente imposible de implementar?
+a) Como mucho una (at-most-once)
+b) Al menos una (at-least-once)
+c) Quizás (maybe)
+d) Exactamente una (exactly-once)
+R: d
+E: Respuesta oficial de 14/15: en una red no fiable no se puede garantizar exactly-once (si el servidor cae tras ejecutar y antes de responder, el cliente no puede saber si se ejecutó). Ojo: en temarios más recientes se matiza que es posible pero carísima (con estado atómico y recuperación).
+Fuente: 14/15 P1.
+---
+T: Tema 2 - Diseño de protocolos
+P: Para implementar un protocolo usted necesita, como mínimo:
+a) Sintaxis y Semántica
+b) Sintaxis y Temporización
+c) Sintaxis, Semántica y Temporización
+d) Sintaxis
+R: c
+E: Un protocolo queda especificado con sintaxis, semántica y temporización (sincronización).
+Fuente: 14/15 P1.
+---
+T: Tema 1 - Introducción
+P: Un middleware hipotético mantiene dos copias de cada servicio accedido. El programador, cuando actualiza el estado del recurso, debe recordar actualizar también su copia. ¿Qué principio viola este mecanismo?
+a) Ninguna de las anteriores
+b) La transparencia de replicación
+c) La transparencia de concurrencia
+d) La transparencia de acceso
+R: b
+E: Con transparencia de replicación, el usuario o programador no debería saber que existen copias ni encargarse de mantenerlas.
+Fuente: 14/15 P1.
+
+% ######################################################################
+% TEMA 4 - COMUNICACIÓN INDIRECTA
+% Hasta 25/26 se preguntaba al principio de la Prueba 2 (P2); este curso
+% entra en la Prueba 1. Preguntas sacadas de los exámenes P2 anteriores.
+% ######################################################################
+---
+T: Tema 4 - Comunicación indirecta
+P: ¿Qué es la comunicación indirecta en sistemas distribuidos?
+a) Comunicación directa entre dos procesos.
+b) Comunicación a través de un intermediario.
+c) Comunicación a través de líneas telefónicas.
+d) Comunicación sincrónica en tiempo real.
+R: b
+E: Comunicación indirecta = emisor y receptor se comunican a través de un intermediario (broker, cola, grupo, memoria compartida distribuida) y no directamente.
+Fuente: 23/24 P2X.
+---
+P: Complete la siguiente frase para definir el concepto de comunicación indirecta: «Un sistema de comunicación indirecta permite...
+a) ... comunicación entre entidades a través de un intermediario proporcionando así desacoplamiento en tiempo y espacio».
+b) ... el envío de un mensaje multicast a un conjunto de procesos del mismo grupo».
+c) ... diseminación de eventos a un gran conjunto de suscriptores».
+d) ... comunicación entre entidades a través de memoria compartida».
+R: a
+E: La definición completa: intermediario + desacoplamiento en espacio (no se conocen) y en tiempo (no tienen por qué coexistir). b), c) y d) describen tipos concretos de comunicación indirecta, no la definición.
+Fuente: 19/20 P2.
+---
+P: ¿Por qué se denomina «comunicación indirecta»?
+a) Porque los receptores nunca reciben información generada en los productores.
+b) Porque suele existir una entidad intermedia que reenvía los mensajes.
+c) Porque el tiempo de propagación no se puede determinar a priori.
+R: b
+E: Los mensajes no van directamente del emisor al receptor, sino a través de un intermediario.
+Fuente: 17/18 P2.
+---
+P: Marca cuál de las siguientes afirmaciones es cierta:
+a) En comunicación indirecta existe un desacoplamiento en espacio y tiempo entre los participantes.
+b) Implementar comunicación indirecta es apropiado para la difusión de eventos, pero cuando los receptores son bien conocidos y no suelen cambiar.
+c) En comunicación indirecta se utiliza un intermediario y todas las partes de la comunicación deben estar en ejecución.
+d) RMI implementa comunicación indirecta.
+R: a
+E: b) es al revés: es apropiada justo cuando los receptores son desconocidos y cambian a menudo. c) contradice el desacoplamiento en tiempo. d) RMI es comunicación directa.
+Fuente: 22/23 P2X.
+---
+P: ¿Qué quiere decir que el emisor y el receptor en un sistema de comunicación indirecta están desacoplados en tiempo?
+a) Emisor y receptor no necesitan existir al mismo tiempo
+b) Emisor no necesita conocer la identidad del receptor y viceversa
+c) Emisor y receptor necesitan existir al mismo tiempo
+d) Emisor necesita conocer la identidad del receptor y viceversa
+R: a
+E: Desacoplados en TIEMPO: pueden tener tiempos de vida distintos, incluso sin solaparse (el intermediario guarda el mensaje). Desacoplados en ESPACIO: no necesitan conocer la identidad o dirección del otro (b).
+Fuente: 21/22 P2 y 17/18 P2X.
+---
+P: En el contexto de comunicación indirecta, ¿qué quiere decir desacoplamiento en espacio?
+a) Emisores/Receptores pueden tener tiempos de vida diferentes.
+b) Se desconoce la identidad de emisores/receptores.
+c) Emisores/Receptores no necesitan coexistir al mismo tiempo.
+d) Emisores/Receptores necesitan compartir un espacio de direcciones.
+R: b
+E: Espacio = identidad/dirección: el emisor no sabe quiénes son los receptores ni dónde están, y viceversa; así se pueden sustituir, migrar o replicar sin que el otro lo note. a) y c) describen el desacoplamiento en tiempo.
+Fuente: 19/20 P2.
+---
+P: ¿Qué quiere decir que el publicador y el suscriptor en un sistema de comunicación indirecta están desacoplados en espacio?
+a) Ninguno de los dos necesita conocer la dirección del otro.
+b) El publicador no necesita conocer la identidad del suscriptor.
+c) Publicadores, suscriptores y brokers se ejecutan todos en nodos distintos.
+d) El broker puede ejecutarse en un nodo distinto a publicadores y suscriptores.
+R: a
+E: El desacoplamiento en espacio es en los dos sentidos: ni el emisor conoce al receptor ni el receptor al emisor. b) se queda a medias. No tiene que ver con en qué nodo se ejecuta cada uno.
+Fuente: 24/25 P2.
+---
+P: En una comunicación IP multicast, los participantes...
+a) Están acoplados en espacio y tiempo.
+b) Están desacoplados en espacio y tiempo.
+c) Están desacoplados en espacio y acoplados en tiempo.
+d) Están acoplados en espacio y desacoplados en tiempo.
+R: c
+E: El emisor envía a una dirección de grupo sin conocer a los receptores (desacoplado en espacio), pero solo reciben los que estén escuchando en ese momento, porque no hay almacenamiento (acoplado en tiempo).
+Fuente: 21/22 P2 y 20/21 P2.
+---
+P: ¿Cuál de los siguientes medios de comunicación podríamos considerar que se encuentra desacoplado en espacio, pero acoplado en tiempo?
+a) RMI
+b) MQTT
+c) IP multicast
+d) Ninguno cumple lo indicado
+R: c
+E: IP multicast: se envía a un grupo sin conocer a los miembros, pero sin almacenamiento, así que el receptor debe estar activo. RMI está acoplado en ambos; MQTT (con broker que puede retener mensajes) desacopla en ambos.
+Fuente: 22/23 P2.
+---
+P: El tipo de comunicación que ofrece RabbitMQ en el caso más habitual está...
+a) Acoplado en tiempo y espacio.
+b) Desacoplado en tiempo y acoplado en espacio.
+c) Acoplado en tiempo y desacoplado en espacio.
+d) Desacoplado en tiempo y espacio.
+R: d
+E: El productor publica en un exchange sin conocer a los consumidores (espacio) y los mensajes esperan en las colas hasta que un consumidor los recoge (tiempo).
+Fuente: 23/24 P2.
+---
+P: Utilizando un sistema de comunicación indirecta basado en eventos, donde el gestor de eventos almacena eventos, ¿qué se requiere, como mínimo, para el envío de un evento?
+a) Que el publicador y el gestor de eventos estén acoplados temporalmente.
+b) Que el publicador y el suscriptor estén acoplados temporalmente.
+c) Que el suscriptor y el gestor de eventos estén acoplados temporalmente.
+d) Que el publicador, suscriptor y gestor de eventos estén acoplados temporalmente.
+R: a
+E: Para ENVIAR, el publicador solo necesita que el gestor (broker) esté activo en ese momento. Como el gestor almacena los eventos, el suscriptor puede recogerlos más tarde.
+Fuente: 20/21 P2X.
+---
+P: ¿Cuál de los siguientes es un ejemplo de comunicación indirecta?
+a) Llamadas a procedimiento remoto (RPC).
+b) Comunicación por sockets.
+c) Colas de mensajes distribuidas.
+d) Comunicación por bluetooth.
+R: c
+E: Tipos de comunicación indirecta: comunicación en grupo, sistemas basados en eventos (publicación-suscripción), colas de mensajes y memoria compartida distribuida. RPC y sockets son comunicación directa.
+Fuente: 23/24 P2X.
+---
+P: ¿Cuál de los siguientes NO se considera un mecanismo de comunicación indirecta?
+a) Comunicación de grupos
+b) Llamada a procedimiento remoto
+c) Sistemas de propagación de eventos
+d) Memoria compartida distribuida
+R: b
+E: RPC es invocación remota, comunicación DIRECTA punto a punto. Las otras tres son tipos de comunicación indirecta.
+Fuente: 21/22 P2X.
+---
+P: ¿Cuál de los siguientes mecanismos NO es una forma de comunicación indirecta?
+a) Memoria compartida distribuida.
+b) Base de datos compartida.
+c) Comunicación de grupos.
+d) Sockets TCP/IP.
+R: d
+E: Un socket TCP conecta directamente dos procesos que se conocen. Una base de datos compartida sí actúa como intermediario (unos escriben, otros leen, sin conocerse).
+Fuente: 23/24 P2X.
+---
+P: ¿Qué característica tiene la comunicación indirecta respecto de la directa?
+a) Es más rápida.
+b) Facilita la sincronización directa entre procesos.
+c) Aumenta el acoplamiento entre los procesos.
+d) Proporciona mayor flexibilidad y desacoplamiento.
+R: d
+E: Su gran ventaja es el desacoplamiento (en espacio y tiempo), que da flexibilidad. Es más lenta, no más rápida (añade un intermediario).
+Fuente: 23/24 P2X.
+---
+P: ¿Cuál de los siguientes suele ser un efecto indeseable de los sistemas de comunicación indirecta?
+a) Disminución del ancho de banda.
+b) Aumento de la latencia.
+c) Disminución del rendimiento.
+d) Aumento de la tasa de fallos
+R: b
+E: El nivel de indirección añade un salto más (emisor → broker → receptor) y procesamiento en el intermediario: más latencia.
+Fuente: 19/20 P2X.
+---
+P: ¿Qué propiedades nos dificulta elegir como modelo de comunicación un esquema indirecto?
+a) Diseminación de los mensajes.
+b) Escalabilidad
+c) Tiempo real en las comunicaciones.
+d) Desacoplamiento
+R: c
+E: Inconvenientes de la comunicación indirecta: sobrecarga por la indirección y dificultad para garantizar propiedades extremo a extremo como el tiempo real o la seguridad. Diseminación, escalabilidad y desacoplamiento son sus ventajas.
+Fuente: 20/21 P2X.
+---
+P: ¿En qué paradigma de comunicación es más sencillo mantener propiedades extremo a extremo como la privacidad?
+a) Comunicación directa
+b) Distribución de eventos.
+c) Comunicación indirecta
+d) Ninguna es correcta.
+R: a
+E: En la comunicación directa solo intervienen los dos extremos. Con un intermediario (broker) que recibe y reenvía los mensajes es más difícil garantizar la privacidad, el tiempo real, etc. extremo a extremo.
+Fuente: 25/26 P2.
+---
+P: ¿Por qué los sistemas de comunicación indirecta se consideran en su mayoría asíncronos?
+a) El emisor es notificado de la entrega mediante un mensaje asíncrono.
+b) El broker envía los mensajes a los suscriptores mediante una invocación no bloqueante sin respuesta tipo RRA.
+c) El emisor no puede hacer ninguna asunción sobre el instante en que el mensaje llega al receptor.
+d) El suscriptor informa al broker mediante un flag tipo piggybacking
+R: c
+E: Al estar desacoplados en el tiempo, el emisor entrega el mensaje al intermediario y sigue; no sabe cuándo (ni si) llegará a cada receptor.
+Fuente: 19/20 P2X.
+---
+P: Los sistemas de comunicación indirecta son adecuados para...
+a) ... aplicaciones que mantienen la conexión durante mucho tiempo.
+b) ... nodos de cómputo para procesamiento masivo por lotes en grandes grids.
+c) ... aplicaciones con un gran número de usuarios que consumen información esporádicamente.
+d) ... cualquier tipo de aplicación.
+R: c
+E: Escenarios típicos: usuarios que se conectan y desconectan a menudo, gran número de usuarios, diseminación de eventos a receptores desconocidos que cambian (notificaciones, feeds, entornos móviles).
+Fuente: 20/21 P2X.
+---
+P: ¿Qué opción es más escalable, a priori, en el desarrollo de un sistema distribuido?
+a) Comunicación indirecta
+b) RPC
+c) RMI
+d) Todas tienen similares prestaciones en cuanto a escalabilidad
+R: a
+E: Al desacoplar emisores y receptores, se pueden añadir muchos productores y consumidores sin que se conozcan ni tengan que estar conectados entre sí.
+Fuente: 20/21 P2.
+---
+P: ¿Qué modelo de comunicación indirecta implica conocer los identificadores de los destinatarios del mensaje que enviamos?
+a) Comunicación en grupo
+b) Colas de mensajes
+c) Ninguno
+d) Modelo de memoria distribuida compartida
+R: c
+E: Precisamente por ser indirecta, en ninguno de sus modelos el emisor conoce a los destinatarios: se envía al grupo, a la cola, al canal o a la memoria compartida.
+Fuente: 22/23 P2X, 21/22 P2 y 20/21 P2X.
+---
+P: ¿Cuál es la principal característica de la «comunicación de grupos»?
+a) Los mensajes se envían de forma directa de un proceso a otro.
+b) Los mensajes quedan almacenados en el broker hasta que todos los miembros los consumen.
+c) Permite enviar un mensaje a todos los procesos que forman parte del grupo.
+d) Los procesos del grupo deben compartir el mismo espacio de direcciones de memoria.
+R: c
+E: El emisor envía al GRUPO (sin conocer la identidad de sus miembros) y el mensaje llega a todos los miembros.
+Fuente: 25/26 P2X.
+---
+P: ¿Qué técnica de comunicación indirecta implementa, por defecto, comunicación unicast?
+a) Colas de mensajes
+b) Sistemas basados en eventos
+c) Comunicación en grupos
+d) Memoria compartida distribuida
+R: a
+E: En una cola, cada mensaje lo consume UN solo receptor (punto a punto). Eventos y grupos son uno-a-muchos.
+Fuente: 19/20 P2.
+---
+P: Como ingeniero responsable del desarrollo de aplicaciones distribuidas, debe seleccionar un modelo de programación para un nuevo sistema distribuido donde 32 compañías distintas volcarán información, mientras que alrededor de 348 compañías recibirán dicha información atendiendo a sus intereses. ¿Cuál de los siguientes modelos de programación permite desacoplar mejor las distintas partes del sistema?
+a) RMI
+b) RPC
+c) Programación orientada a eventos
+R: c
+E: Muchos productores, muchos consumidores que eligen lo que les interesa: publicación-suscripción (eventos). RMI y RPC acoplan a cada cliente con cada servidor.
+Fuente: 14/15 P2.
+---
+P: ¿Cuál es el modelo de comunicación más adecuado para un sistema de estaciones meteorológicas que informan sobre temperatura, viento y presión a un conjunto indeterminado y dinámico de posibles clientes?
+a) Polling a una base de datos.
+b) Un sistema publicador-suscriptor.
+c) Un sistema de ficheros distribuido.
+d) RPC o RMI.
+R: b
+E: "Conjunto indeterminado y dinámico de clientes" es el escenario de manual de publicación-suscripción: las estaciones publican y los clientes se suscriben y desuscriben cuando quieren.
+Fuente: 17/18 P2, 20/21 P2, 21/22 P2 y 22/23 P2X.
+---
+P: En un despliegue de Internet of Things con errores de comunicación intermitentes, ¿qué mecanismo es el más adecuado?
+a) Comunicación directa entre dispositivos
+b) Comunicación mediante sockets TCP/IP
+c) Comunicación mediante un sistema de publicación/suscripción con brokers
+d) Ninguna es correcta
+R: c
+E: El broker desacopla en el tiempo: si un dispositivo pierde la conexión un rato, los mensajes pueden esperar en el broker (p. ej., MQTT). Con comunicación directa ambos extremos deben estar disponibles a la vez.
+Fuente: 24/25 P2X.
+---
+P: De cara al desarrollo de un videojuego multijugador en tiempo real, ¿qué mecanismo es más eficiente?
+a) ZeroC Ice
+b) Java RMI
+c) AMQP
+d) sockets BSD
+R: d
+E: Para tiempo real lo más eficiente es el nivel más bajo, sin capas intermedias. Un broker AMQP añadiría latencia (y el tiempo real es justo un punto débil de la comunicación indirecta).
+Fuente: 14/15 P2.
+---
+P: ¿A qué tipo de mensajes llamamos «eventos»?
+a) A los que transportan datos y nunca implican enviar un resultado hacia el emisor.
+b) A los que se producen por efecto de una magnitud física no predecible.
+c) A cualquier método cuyo mensaje se pueda transportar sobre UDP.
+R: a
+E: Un evento es una notificación de un solo sentido: lleva datos y no hay respuesta hacia el emisor (no es petición-respuesta).
+Fuente: 17/18 P2.
+---
+P: ¿Cuál de las siguientes frases define mejor el concepto de evento?
+a) Ejecución de un fragmento de código remoto que retorna una respuesta síncrona.
+b) Ejecución de un fragmento de código remoto que retorna una respuesta asíncrona.
+c) Comunicación de datos entre dos objetos distribuidos cualesquiera.
+d) Difusión de una notificación con un valor asociado.
+R: d
+E: Evento = notificación (con un valor asociado) que se difunde a los interesados, sin respuesta. a) y b) describen invocaciones remotas.
+Fuente: 21/22 P2 y 21/22 P2X.
+---
+P: ¿Qué es el patrón de publicación/suscripción en sistemas distribuidos?
+a) Un método para realizar llamadas a procedimiento remoto (RPC).
+b) Un esquema en el que los procesos se comunican mediante el intercambio de archivos.
+c) Productores envían mensajes a múltiples consumidores interesados a través de un intermediario.
+d) Una técnica para compartir memoria entre procesos en diferentes nodos.
+R: c
+E: Los publicadores envían eventos al broker y este los entrega a todos los suscriptores interesados (uno a muchos).
+Fuente: 23/24 P2X.
+---
+P: ¿Cuál de las siguientes es una operación típica del paradigma publicación-suscripción?
+a) notify()
+b) subscribe()
+c) advertise()
+d) Todas las anteriores
+R: d
+E: Operaciones de publicación-suscripción: publish(e), subscribe(f), unsubscribe(f), notify(e) (el broker entrega al suscriptor), advertise(f) y unadvertise(f) (el publicador anuncia qué va a publicar).
+Fuente: 24/25 P2.
+---
+P: ¿Para qué se utiliza la función advertise(f) empleada en un sistema publish-subscribe?
+a) Para suscribirse a eventos de un determinado filtro.
+b) Para anunciar el tipo de eventos que un publicador va a comenzar a diseminar.
+c) Para cancelar una suscripción de eventos.
+d) Para enviar mensajes hacia un determinado destino utilizando una ruta concreta.
+R: b
+E: advertise(f) la usa el PUBLICADOR para anunciar qué eventos va a generar (y el broker puede optimizar el enrutado). a) es subscribe y c) unsubscribe.
+Fuente: 19/20 P2.
+---
+P: Marca la afirmación correcta en relación a los sistemas de propagación de eventos de publicación–suscripción basados en broker:
+a) Los publicadores no conocen las referencias de los suscriptores.
+b) Cada publicador es responsable de almacenar las referencias de sus suscriptores.
+c) Cada suscriptor es responsable de almacenar las referencias de sus publicadores.
+d) Cada pareja publicador-suscriptor es única y está identificada unívocamente.
+R: a
+E: Es el desacoplamiento en espacio: el que guarda las suscripciones es el broker; publicadores y suscriptores no se conocen.
+Fuente: 21/22 P2X, 22/23 P2X, 24/25 P2X y 15/16 P2.
+---
+P: ¿Cuál de las siguientes funciones NO es implementada por el broker de un sistema publish-subscribe?
+a) Relacionar los publicadores de mensajes con sus suscriptores.
+b) Garantizar la entrega fiable de mensajes a todos los suscriptores.
+c) Determinar la estructura que deben tener los mensajes que se publican/reciben.
+d) Enrutar los mensajes desde los publicadores hasta sus suscriptores.
+R: c
+E: El broker gestiona suscripciones, enruta y entrega (con más o menos fiabilidad), pero no impone el formato del contenido: eso lo acuerdan publicadores y suscriptores.
+Fuente: 19/20 P2.
+---
+P: ¿Cuál NO es una función del broker en un middleware de comunicación indirecta?
+a) Determinar a qué suscriptores debe llegar cada mensaje.
+b) Gestionar la creación/destrucción de canales, topics o colas.
+c) Enviar mensajes a los suscriptores.
+d) Determinar el tipo de filtrado más adecuado en cada caso.
+R: d
+E: El broker aplica los filtros que indican los suscriptores, pero no decide qué tipo de filtrado usar: eso lo elige el suscriptor al suscribirse (o viene dado por el sistema).
+Fuente: 19/20 P2X.
+---
+P: Está implementando un sistema de comunicación indirecta con ZeroC Ice. ¿Qué componente es más probable que implemente una interfaz similar a la siguiente?
+```
+interface Foo {
+    void publish(string m);
+    void setfilter(string m);
+    void subscribe(string topic);
+}
+```
+a) El publicador
+b) El consumidor
+c) El broker
+d) Broker y consumidor
+R: c
+E: Esas operaciones las invocan los publicadores (publish) y los suscriptores (subscribe, setfilter) sobre el intermediario: las implementa el broker.
+Fuente: 23/24 P2 y 20/21 P2.
+---
+P: En un sistema de publicación-suscripción, ¿cuál es el principal inconveniente de un broker centralizado respecto a uno descentralizado?
+a) Poca escalabilidad.
+b) Su implementación es más compleja.
+c) Dificultad para garantizar propiedades extremo a extremo, como seguridad.
+d) No implica inconvenientes adicionales.
+R: a
+E: Todo el tráfico pasa por un único broker: es un cuello de botella (y un punto único de fallo). Una red de brokers cooperando escala mejor, pero es más compleja de implementar.
+Fuente: 22/23 P2.
+---
+P: Indique la frase INCORRECTA sobre el enrutamiento de eventos:
+a) Puede explotar la información transportada en los eventos para determinar la ruta a los suscriptores.
+b) Puede necesitar conocer los suscriptores que cada broker en la red mantiene.
+c) Un solo broker es responsable de determinar el enrutamiento.
+d) La decisión de enrutamiento es tomada en cada broker de la red.
+R: c
+E: En una red de brokers, cada broker toma su decisión de reenvío (enrutamiento distribuido, p. ej., basado en contenido). No hay un único responsable.
+Fuente: 19/20 P2.
+---
+P: ¿Qué es un sistema de suscripción «content-based»?
+a) El que permite al publicador indicar al broker qué suscriptores deben recibir los mensajes.
+b) El que permite al suscriptor decidir los mensajes que quiere recibir en función de lo que incluyen.
+c) El que permite al suscriptor indicar el contenido de los canales en el broker.
+R: b
+E: Basado en contenido: el suscriptor define un filtro sobre los valores de los atributos del evento (p. ej., temperatura > 30) y solo recibe los que lo cumplen.
+Fuente: 17/18 P2.
+---
+P: ¿Qué modelo de suscripción de un sistema publish-subscribe se usa cuando el filtro es una consulta definida sobre los valores de los atributos de cada evento?
+a) Basado en canal.
+b) Basado en tópicos.
+c) Basado en contenido.
+d) Basado en tipos.
+R: c
+E: Canal: te suscribes a un canal con nombre y recibes todo. Tópico: el tema va como un campo del evento. Contenido: predicado sobre los atributos (generaliza el de tópicos). Tipo: te suscribes a una clase o tipo de evento.
+Fuente: 17/18 P2X, 19/20 P2, 23/24 P2 y 24/25 P2X.
+---
+P: ¿Qué caracteriza al modelo de suscripción «topic based» en un sistema de publicación-suscripción?
+a) Depende de la clase (tipo) de los mensajes.
+b) El «topic» aparece como un campo de los mensajes.
+c) El «topic» es un nombre de una lista disponible en el broker.
+d) La suscripción indica el rango de valores en los que está interesado.
+R: b
+E: Basado en tópicos: parecido al de canales, pero el tópico (que puede ser jerárquico) va explícito como un campo del evento. a) es el basado en tipos, c) el basado en canales y d) el basado en contenido.
+Fuente: 22/23 P2.
+---
+P: En un sistema publicador-suscriptor con el modelo de suscripción «basado en tipo», el suscriptor...
+a) Indica el nombre del canal elegido.
+b) Proporciona un predicado sobre los atributos del evento.
+c) Proporciona la clase o tipo del evento.
+d) Indica un campo del mensaje como clave de enrutado.
+R: c
+E: Basado en tipos: las suscripciones se definen en función del tipo (clase) de los eventos, integrándose con el sistema de tipos del lenguaje.
+Fuente: 25/26 P2X.
+---
+P: Marca los modelos habituales de suscripción en un sistema de publicación-suscripción (respuesta múltiple):
+a) Basado en canales.
+b) Basado en tópicos.
+c) Basado en contenido.
+d) Basado en tipo.
+e) Basado en sesiones.
+f) Basado en conexiones.
+R: a, b, c, d
+E: Los cuatro modelos de suscripción: canales, tópicos (temas), contenido y tipos. "Sesiones" y "conexiones" no existen como modelos.
+Fuente: 25/26 P2 y 25/26 P2X.
+---
+P: ¿Cuáles son las ventajas del uso de filtros en los sistemas de comunicación indirecta? (marque 2)
+a) Ahorrar en recursos de red entre broker y receptor.
+b) Ahorrar en recursos de red entre emisor y broker.
+c) Ahorrar en procesamiento en los receptores.
+d) Ahorrar en procesamiento en el broker.
+R: a, c
+E: El broker aplica el filtro y solo envía al receptor lo que le interesa: menos tráfico broker→receptor y menos trabajo en el receptor (no tiene que descartar). El emisor envía lo mismo y el broker trabaja MÁS (evalúa los filtros).
+Fuente: 19/20 P2X.
+---
+P: Una suscripción persistente (durable) en un sistema de publicación-suscripción es aquella en la que la suscripción...
+a) permanece activa indefinidamente y no puede cancelarse.
+b) permite al suscriptor recibir los mensajes publicados mientras estaba desconectado.
+c) garantiza la confidencialidad de los mensajes mediante cifrado.
+d) solo recibe los mensajes marcados como prioritarios.
+R: b
+E: Con una suscripción durable el broker guarda los mensajes mientras el suscriptor está desconectado y se los entrega cuando vuelve (desacoplamiento en tiempo).
+Fuente: 25/26 P2X.
+---
+P: ¿Cómo sería el flujo de mensajes en un sistema publicación-suscripción de tipo push-pull?
+a) El publicador envía mensajes al broker y el suscriptor los solicita cuando los necesita.
+b) El publicador solicita al broker que envíe mensajes al suscriptor cuando los necesita.
+c) El publicador envía mensajes al broker y el broker los envía al suscriptor cuando están disponibles.
+d) No es posible implementar entrega push-pull en publicación-suscripción.
+R: a
+E: La primera parte es el lado del publicador y la segunda el del suscriptor. Push: el publicador empuja al broker. Pull: el suscriptor pide (sondea) al broker. c) sería push-push.
+Fuente: 25/26 P2 y 25/26 P2X.
+---
+P: En un sistema de publicación/suscripción, tanto publicador como suscriptor proporcionan funciones «callback» para envío y recepción de mensajes respectivamente. ¿Qué modelo de interacción parece seguir este sistema?
+a) push/push
+b) pull/pull
+c) push/pull
+d) pull/push
+R: d
+E: Si el PUBLICADOR ofrece un callback para enviar, es el sistema quien le pide los mensajes (pull en el lado del publicador). Si el SUSCRIPTOR ofrece un callback para recibir, el sistema le entrega los mensajes (push en el lado del suscriptor).
+Fuente: 23/24 P2.
+---
+P: ¿A qué se refiere el concepto de callback habitual en los mecanismos que soportan recepción push?
+a) Es un mecanismo de bloqueo que se aplica en el despachado concurrente.
+b) Se refiere al mecanismo de serialización del sirviente en middlewares RMI.
+c) Es algún elemento invocable mediante el cual el runtime nos proporciona los mensajes.
+d) Es un módulo del runtime que proporciona la interfaz de serialización que ofrece el servidor.
+R: c
+E: En recepción push registras una función u objeto (callback) y el middleware la invoca cada vez que llega un mensaje, sin que tengas que pedirlo (p. ej., basic_consume(callback) en RabbitMQ o el sirviente suscriptor en IceStorm).
+Fuente: 23/24 P2.
+---
+T: Tema 4 - Comunicación indirecta
+P: ¿Qué modelo de comunicación utiliza ZeroC Ice?
+a) RPC
+b) RMI
+c) Ninguno de los anteriores
+d) Message Queue
+R: b
+E: Ice es un middleware orientado a objetos: invocación de métodos sobre objetos remotos (proxies, sirvientes, adaptadores), es decir, RMI. La comunicación indirecta la añade su servicio IceStorm.
+Fuente: 14/15 P2.
+---
+P: IceStorm es un sistema de propagación de eventos basado en...
+a) contenido
+b) tipo
+c) canal
+d) Ninguno de los otros
+R: c
+E: Respuesta oficial: en IceStorm el publicador obtiene un topic con nombre del TopicManager y los suscriptores se suscriben a ese topic para recibir todo lo que se publica en él; funciona como un canal con nombre, sin filtros por contenido.
+Fuente: 22/23 P2X.
+---
+P: Indique cuál de estas características tiene IceStorm de ZeroC Ice:
+a) El broker está centralizado
+b) Está basado en topics
+c) Se pueden establecer federaciones de topics
+d) Todas las anteriores son correctas
+R: d
+E: IceStorm usa un servicio central (TopicManager) que gestiona topics con nombre, y los topics se pueden enlazar (federación) para propagar eventos entre ellos. (En el examen original la opción "todas" estaba en la posición c.)
+Fuente: 14/15 P2.
+---
+P: ¿Cuál de las siguientes es una característica de IceStorm poco común en otros sistemas de propagación de eventos?
+a) Puede funcionar sin broker.
+b) Es posible crear y gestionar «topics» para la segregación de mensajes.
+c) Su modelo de programación consiste en invocar métodos de una interfaz.
+d) Dispone de un mecanismo de replicación en el que todos los publicadores pueden actuar como brokers.
+R: c
+E: En IceStorm publicar es invocar un método de una interfaz Slice sobre un proxy del topic (y el suscriptor es un sirviente que implementa esa interfaz). La mayoría de sistemas envían mensajes genéricos. Tener topics es lo normal en todos.
+Fuente: 24/25 P2 y 17/18 P2.
+---
+P: ¿Cuál de las siguientes es una característica de IceStorm poco común en otros sistemas de propagación de eventos?
+a) Es posible crear y gestionar «topics» para la segregación de mensajes.
+b) Cada publicador o suscriptor puede elegir el protocolo para el envío y recepción de invocaciones.
+c) Dispone de un mecanismo P2P para la gestión de canales sin necesidad de un broker central.
+R: b
+E: Como IceStorm se apoya en Ice, cada publicador o suscriptor usa sus propios endpoints y puede elegir el transporte (TCP, UDP, SSL…) y el modo (twoway, oneway, datagram). Los topics los tiene cualquier sistema y IceStorm sí usa un servicio central.
+Fuente: 15/16 P2.
+---
+P: Marca la afirmación FALSA respecto a los sistemas de publicación-suscripción:
+a) En IceStorm habitualmente el valor de retorno de un método invocado sobre el canal devuelve un booleano
+b) En caso de error los suscriptores pueden enviar una excepción remota directamente al publicador correspondiente
+c) Los suscriptores reciben copias de los mensajes enviados por cualquier publicador
+d) Los publicadores deben coordinarse previamente para evitar colisiones al enviar a un canal de eventos
+R: b
+E: Respuesta oficial. El suscriptor no conoce al publicador (desacoplamiento) y los eventos van sin respuesta, así que una excepción nunca puede llegar al publicador. (La d también es dudosa, porque los publicadores no necesitan coordinarse, pero la marcada es la b.)
+Fuente: 14/15 P2.
+---
+T: Tema 4 - Comunicación indirecta
+P: ¿Qué afirmación sobre un sistema de colas de mensajes distribuidas es más acertada?
+a) El broker determina el receptor de cada mensaje de la cola distribuida.
+b) El emisor coloca sus mensajes en una cola genérica, y el broker los clasifica y responde al emisor.
+c) Varios receptores reciben copias del mismo mensaje.
+d) No hay diferencias sustanciales con un sistema publicador-suscriptor.
+R: a
+E: En una cola cada mensaje lo consume un único receptor y es el broker quien decide cuál (p. ej., round-robin). c) describe publicación-suscripción, que es uno-a-muchos.
+Fuente: 24/25 P2, 21/22 P2X y 15/16 P2.
+---
+P: Con la configuración más básica, en las colas de mensajes distribuidas, cuando se envía un mensaje a una cola en la que hay varios suscriptores, ¿cuántos de ellos lo reciben?
+a) ninguno
+b) 1
+c) todos
+d) Aquellos que no han recibido ningún mensaje previo
+R: b
+E: Una cola es punto a punto: cada mensaje lo recibe un solo consumidor (los mensajes se reparten entre ellos).
+Fuente: 22/23 P2.
+---
+P: En el patrón de «cola de trabajo» (working queue) con múltiples consumidores suscritos a la misma cola en RabbitMQ, por defecto, ¿cómo se distribuyen los mensajes?
+a) Todos los consumidores reciben una copia de cada mensaje.
+b) Los mensajes se distribuyen en round-robin entre los consumidores.
+c) El consumidor más rápido recibe todos los mensajes.
+d) El broker elige al consumidor en función del contenido del mensaje.
+R: b
+E: Por defecto RabbitMQ reparte los mensajes de una cola por turnos (round-robin) entre los consumidores conectados; cada mensaje va a uno solo.
+Fuente: 25/26 P2X.
+---
+P: ¿Qué ventaja principal tiene un sistema de procesamiento de trabajo de tipo «cola de trabajo»?
+a) Permite la comunicación síncrona entre productores y workers.
+b) Facilita la comunicación en tiempo real entre múltiples productores y workers.
+c) Desacopla en el eje temporal a productores y workers.
+d) No tiene ventajas significativas sobre otros modelos de procesamiento.
+R: c
+E: Los productores dejan las tareas en la cola aunque no haya workers libres o activos; los workers las procesan cuando pueden. Eso es desacoplamiento en tiempo (y además reparte la carga).
+Fuente: 25/26 P2 y 25/26 P2X.
+---
+P: ¿Con qué mecanismo proporcionado por ZeroC Ice está relacionada la técnica de procesamiento «working queue» habitual en los middlewares de colas de mensajes distribuidas?
+a) Batched invocations
+b) Asynchronous Method Dispatch
+c) Asynchronous Method Invocation
+d) No hay ningún mecanismo relacionado
+R: b
+E: Con AMD el servidor puede encolar las peticiones y responderlas más tarde, cuando un worker las procesa, sin tener un hilo bloqueado por petición: es el mismo patrón que una cola de trabajo. AMI es del lado cliente.
+Fuente: 22/23 P2.
+---
+P: ¿En qué consiste la técnica de polling en un sistema de colas de mensajes?
+a) El consumidor se bloquea hasta que exista un mensaje en la cola.
+b) El consumidor continúa su ejecución y cuando exista un mensaje en la cola recibe una notificación.
+c) El consumidor sondea periódicamente la cola para detectar si existe algún mensaje en la cola.
+d) El productor envía periódicamente mensajes al sistema de colas.
+R: c
+E: Formas de recibir de una cola: recepción bloqueante (a), notificación o push (b) y polling (c): consultar cada cierto tiempo sin bloquearse.
+Fuente: 19/20 P2.
+---
+P: ¿En qué caso NO es adecuado a priori el uso de un middleware de colas de mensajes distribuidas?
+a) Emisores y receptores no están activos al mismo tiempo.
+b) Los receptores se encuentran dispersos en múltiples nodos de la red.
+c) Los emisores esperan los resultados del cómputo realizado en los receptores.
+d) Se desea persistencia de los mensajes.
+R: c
+E: Si el emisor necesita la respuesta y espera por ella, el patrón natural es petición-respuesta (RPC/RMI). Las colas brillan con desacoplamiento en tiempo, receptores dispersos y persistencia.
+Fuente: 19/20 P2X y 22/23 P2X.
+---
+P: RabbitMQ usa un modelo de comunicación indirecta del tipo:
+a) Sistema basado en eventos distribuidos.
+b) Memoria distribuida.
+c) Cola de mensajes.
+d) Comunicación uno a uno.
+R: c
+E: RabbitMQ es un middleware de colas de mensajes (implementa AMQP): los productores publican en exchanges que enrutan a colas, de las que leen los consumidores.
+Fuente: 21/22 P2X.
+---
+P: AMQP es:
+a) Un protocolo de comunicación directa entre procesos
+b) Un protocolo de comunicación basado en memoria compartida
+c) Un broker de comunicaciones
+d) Un protocolo de comunicación de la capa de aplicación usado típicamente en sistemas de comunicación indirecta
+R: d
+E: AMQP (Advanced Message Queuing Protocol) es un protocolo estándar de nivel de aplicación para mensajería. RabbitMQ es un broker que lo implementa.
+Fuente: 24/25 P2X.
+---
+P: ¿Qué función realizan los «exchanges» en un sistema tipo AMQP?
+a) Intercambian mensajes entre colas del mismo tipo.
+b) Almacenan los mensajes en espera de ser enviados a un suscriptor.
+c) Aplican las políticas de envío a los suscriptores.
+R: c
+E: El productor publica en un exchange, y este decide (según su tipo y las bindings/routing keys) a qué colas va cada mensaje. Quienes almacenan los mensajes son las colas.
+Fuente: 17/18 P2.
+---
+P: En RabbitMQ, ¿cómo se implementan las políticas de enrutado de los mensajes a las distintas colas?
+a) Los publicadores especifican las colas destino.
+b) Las propias colas tienen sus filtros asociados.
+c) Los Exchanges o intercambiadores las implementan.
+d) Los consumidores, al declarar las colas a las que se suscriben.
+R: c
+E: El enrutado lo hacen los exchanges (direct, fanout, topic, headers) usando las routing keys y las bindings con las colas.
+Fuente: 20/21 P2X y 20/21 P2.
+---
+P: ¿Qué ocurre cuando se publica un mensaje en un exchange de tipo «fanout» en RabbitMQ?
+a) Solo la cola cuya routing key coincida exactamente con la del mensaje lo recibe.
+b) El mensaje se almacena en el exchange hasta que una cola lo solicite.
+c) El mensaje se reenvía a todas las colas vinculadas al exchange.
+d) El exchange selecciona aleatoriamente una cola destino.
+R: c
+E: fanout = difusión: copia el mensaje a todas las colas enlazadas e ignora la routing key. a) es un exchange direct. Los exchanges no almacenan mensajes.
+Fuente: 25/26 P2X.
+---
+P: ¿Qué modelos de invocación se podrían implementar con RabbitMQ?
+a) Comunicación indirecta
+b) RPC
+c) RMI
+d) RabbitMQ puede implementar/emular los modelos de comunicación a), b) y c)
+R: d
+E: Además de colas y publicación-suscripción, sobre RabbitMQ se puede emular petición-respuesta (RPC/RMI) con una cola de respuesta (reply_to) y un correlation_id; está en los tutoriales oficiales.
+Fuente: 20/21 P2.
+---
+P: En RabbitMQ, ¿podría usar Protocol Buffers de Google para codificar los mensajes enviados a las colas?
+a) No
+b) Sí
+c) Depende del tamaño del mensaje.
+d) Solo a partir de la versión 3.
+R: b
+E: Para RabbitMQ el cuerpo del mensaje es una secuencia de bytes opaca: puedes serializarlo como quieras (JSON, protobuf, texto…).
+Fuente: 20/21 P2X.
+
+% ======================================================================
+% Tema 4 - Preguntas de los exámenes P2 y P2X
+% ======================================================================
+---
+T: Tema 4 - Comunicación indirecta
+P: Explicación de una pregunta de desarrollo (convertida a test): ¿cómo construirías un sistema de publicación-suscripción usando únicamente RPC?
+a) Publicadores y suscriptores serían clientes RPC del broker; el broker sería un servidor RPC, y los suscriptores también serían servidores RPC para recibir los eventos.
+b) Solo los publicadores serían servidores RPC.
+c) No es posible hacerlo con RPC.
+d) Cada publicador llamaría directamente por RPC a cada suscriptor.
+R: a
+E: Solución oficial: el publicador llama a publish(topic, event) en el broker; el suscriptor llama a subscribe(topic, endpoint) indicando dónde está su propio servidor, y el broker le llama ahí para entregarle los eventos. d) no tendría intermediario.
+Fuente: 19/20 P2X (pregunta abierta, adaptada).
+
+% ======================================================================
+% IceStorm
+% ======================================================================
+---
+P: Considere un sistema RabbitMQ donde P1 es publicador, X es un exchange y C1, C2, C3 consumen de las colas Q1, Q2, Q3:
+```
+P1 --> X ==> Q1 ...--> C1
+         ==> Q2 ...--> C2
+         ==> Q3 ...--> C3
+```
+¿De qué tipo debe declararse el exchange X para conseguir un sistema publish-subscribe en el que C1, C2 y C3 se suscriben a todos los mensajes enviados por P1?
+a) fanout
+b) direct
+c) topic
+d) routing key
+R: a
+E: Todos reciben todo = fanout (copia a todas las colas vinculadas).
+Fuente: 19/20 P2.
+---
+P: Con el mismo sistema RabbitMQ (P1 publica en el exchange X, que alimenta las colas Q1, Q2 y Q3), se desea extender este sistema publish-subscribe a un conjunto de n suscriptores a todos los mensajes enviados por P1, ¿qué modificación tendría que realizar en el sistema?
+a) Añadir tantos exchanges como subscriptores, conectar un subscriptor por exchange.
+b) Añadir tantas colas como subscriptores, conectar el Exchange a las colas y conectar 1 subscriptor por cola.
+c) Modificar el tipo del exchange a direct.
+d) Configurar un sistema RabbitMQ tipo Round Robin.
+R: b
+E: Para que cada suscriptor reciba su copia, cada uno necesita su propia cola. Si compartieran cola, se repartirían los mensajes (round-robin) en vez de recibirlos todos.
+Fuente: 19/20 P2.
+---
+P: Con el mismo sistema RabbitMQ, ¿de qué tipo debe declararse el exchange X para conseguir que C1, C2 y C3 reciban sólo aquellos mensajes enviados por P1 cuya clave de enrutamiento equipare con una determinada expresión regular?
+a) fanout
+b) direct
+c) topic
+d) routing key
+R: c
+E: Topic = encaminar por patrón de la clave (con comodines). Direct exige que la clave coincida exactamente.
+Fuente: 19/20 P2.
+---
+P: Indique la binding key que debería tener el binding entre un Exchange de tipo topic y una cola para conseguir enrutar todos los mensajes con routing key «ssdd.comunicacionindirecta»:
+a) *.*
+b) ssdd.*.*
+c) *.comunicacionindirecta
+d) a) y c) son correctas
+R: d
+E: En los exchanges topic, * sustituye a exactamente una palabra. La clave tiene dos palabras (ssdd y comunicacionindirecta): *.* encaja, *.comunicacionindirecta también, y ssdd.*.* pide tres palabras.
+Fuente: 19/20 P2.
