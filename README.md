@@ -8,6 +8,8 @@ en ficheros .txt muy sencillos, así que cualquiera puede añadir las suyas.
 Trae bancos de preguntas de Sistemas Distribuidos y de Arquitectura de
 Computadores (laboratorio de OpenMP, en inglés).
 
+![Modo práctica con una pregunta del banco de OpenMP](docs/captura-practica.png)
+
 En Windows basta con tener Python 3.10 o superior de python.org y hacer doble
 clic en `lanzar.bat`. En Linux y Mac:
 
