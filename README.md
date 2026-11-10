@@ -101,6 +101,7 @@ P: Siguiente pregunta...
 
 ## Créditos
 
-Proyecto de David Calzado Olmo, hecho con [Claude](https://claude.ai) (Anthropic)
-y con la colaboración de [Rodrigo](https://github.com/RodrigoMunozMartin).
+- El código base lo hizo [Rodrigo Muñoz Martín](https://github.com/RodrigoMunozMartin).
+- [David Calzado Olmo](https://github.com/DavidCOAlmagro) lo pulió y lo amplió,
+  con ayuda de [Claude](https://claude.ai) (Anthropic).
 
