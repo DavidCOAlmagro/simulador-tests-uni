@@ -814,9 +814,29 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
 
     # ───────────────────────────── App ─────────────────────────────
     class App(tk.Tk):
+        def _poner_icono(self):
+            carpeta = APP_DIR / "icono"
+            try:
+                if sys.platform == "win32":
+                    # el .ico trae varios tamaños y se ve nítido en la barra de título
+                    self.iconbitmap(default=str(carpeta / "icono.ico"))
+                else:
+                    self._icono = tk.PhotoImage(file=str(carpeta / "icono.png"))
+                    self.iconphoto(True, self._icono)
+            except tk.TclError:
+                pass  # si falta el icono, la app funciona igual
+
         def __init__(self):
+            if sys.platform == "win32":
+                # sin esto Windows agrupa la ventana con Python y enseña su icono en la barra de tareas
+                try:
+                    import ctypes
+                    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("simulador.tests.uni")
+                except (OSError, AttributeError):
+                    pass
             super().__init__()
             self.title("Test tipo autoescuela")
+            self._poner_icono()
             self.settings = load_settings()
             self.theme = self.settings.get("theme", "light")
             if self.theme not in PALETTES:
