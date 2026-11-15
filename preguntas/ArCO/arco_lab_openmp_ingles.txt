@@ -1054,3 +1054,221 @@ c) Yes, an atomic on each assignment to r1, r2 and r3.
 d) Yes, a reduction(+) clause on r1, r2 and r3.
 R: b
 E: No two threads write to the same variable. Protection (reduction(+:resultado_global) or atomic) would only be needed if each section added directly into resultado_global. sections is the right directive because these are three independent blocks of code, not the iterations of a loop.
+
+% ======================================================================
+% EXAM STYLE: short code fragments (like the first test questions of the exam)
+% ======================================================================
+---
+T: Exam - Code fragments
+P: What does reduction(+:total) do in this fragment?
+```
+int total = 0;
+#pragma omp parallel for reduction(+:total)
+for (int i = 0; i < n; i++)
+    total += v[i];
+```
+a) Each thread adds into the shared total, protected by a lock in every iteration.
+b) Only one thread runs the loop and the others wait at the implicit barrier.
+c) Each thread gets its own copy of total, and the copies are discarded at the end.
+d) Each thread adds into its own copy of total, starting at 0, and the copies are added at the end.
+R: d
+E: reduction gives each thread a private copy initialized to the identity of the operator (0 for +). Inside the loop there is no lock at all; at the end the copies are combined with the original value of total. That is why it is the cheapest way to fix an accumulation.
+---
+P: What does critical guarantee in this fragment?
+```
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    #pragma omp critical
+    {
+        list[n] = id;
+        n++;
+    }
+}
+```
+a) The two statements are turned into a single hardware atomic instruction.
+b) Only one thread at a time runs the block, so the two statements of two threads never mix.
+c) Each thread runs the block once, at the same time as all the others.
+d) The block is run only by the master thread and the others skip it.
+R: b
+E: critical lets one thread at a time into the block. Here it is needed because the block has two statements that must go together (write list[n] and then increment n): atomic could not be used, because it only protects one single update.
+---
+P: What does atomic do in this fragment?
+```
+#pragma omp parallel for
+for (int i = 0; i < n; i++) {
+    #pragma omp atomic
+    hist[v[i]]++;
+}
+```
+a) It makes each whole loop iteration run on one thread at a time.
+b) It turns hist into a private array, one copy per thread.
+c) It makes hist[v[i]]++ a single indivisible update.
+d) It makes each thread wait at that line until all the others arrive.
+R: c
+E: Several iterations can increment the same bin of hist, so the update must be protected. atomic protects just that single update (read, add and write of one memory location) with a hardware instruction, which is much cheaper than critical. The rest of the iteration still runs in parallel.
+---
+P: How many times is "Start" printed in this fragment, and by whom?
+```
+#pragma omp parallel num_threads(4)
+{
+    #pragma omp single
+    printf("Start\n");
+    work();
+}
+```
+a) Once, by the first thread to arrive; the others wait for it.
+b) Once, always by thread 0; the others call work() without waiting.
+c) Four times, once per thread, each one after the previous.
+d) Never, because single can only be used with a for loop inside.
+R: a
+E: single runs the block once, on the first thread that gets there (not necessarily thread 0). At the end of single there is an implicit barrier, so nobody calls work() until "Start" has been printed. With single nowait the others would not wait.
+---
+P: What happens when this fragment runs?
+```
+#pragma omp parallel sections num_threads(4)
+{
+    #pragma omp section
+    read_data();
+    #pragma omp section
+    compute();
+}
+```
+a) Each of the 4 threads runs read_data() and then compute().
+b) read_data() runs on 2 threads and compute() on the other 2.
+c) They run one after the other, both on the master thread.
+d) Each runs once, on two threads at the same time; two threads stay idle.
+R: d
+E: Each section is run exactly once, by one thread. The team still has 4 threads, but with only 2 sections two of them have no work and simply wait at the implicit barrier at the end.
+
+% ======================================================================
+% EXAM STYLE: blocks about the first code of the lab6 notebook (exercise A)
+% ======================================================================
+---
+T: Exam - Notebook exercise A
+P: The i loop of exercise A (moving average) is parallelized with #pragma omp parallel for:
+```
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+Which variables are shared and which are private?
+a) Shared: X, Y, N and W. Private: i, sum, ini, fin and k.
+b) Shared: X, Y and sum. Private: i, ini, fin and k.
+c) Shared: X and N. Private: Y, i, sum, ini, fin and k.
+d) Shared: everything except i, the only private variable.
+R: a
+E: X, Y, N and W are declared outside the loop, so they are shared (X, N and W are only read, and each Y[i] is written by one thread). i is the index of the split loop, so it is private automatically. sum, ini, fin and k are declared inside the loop body, so each iteration has its own.
+---
+P: Which directive parallelizes exercise A (moving average) correctly and efficiently?
+```
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+a) #pragma omp parallel for reduction(+:sum) on the i loop
+b) #pragma omp parallel for schedule(static) on the i loop
+c) #pragma omp parallel for on the inner k loop
+d) #pragma omp parallel for schedule(dynamic, 1) on the i loop
+R: b
+E: Every iteration does almost the same work (a window of W+1 values), so static is best: no scheduling overhead and each thread gets a contiguous block of X and Y, which uses the cache well. reduction(+:sum) is not needed because sum is local to each iteration. The k loop has only W+1 iterations: far too little work to split. dynamic,1 adds overhead and makes neighboring iterations write to the same cache line of Y from different threads (false sharing).
+---
+P: On Kaggle (4 vCPUs), exercise A (moving average) gets a speedup well below 4 with 4 threads. What is the main reason?
+a) There is a race condition on Y that forces the threads to repeat work.
+b) The implicit barrier at the end of the loop makes the threads run one after another.
+c) It is memory-bound: few operations per value read, many cache misses and a shared memory bandwidth.
+d) OpenMP runs sequentially any loop that contains another loop inside.
+R: c
+E: Each iteration does about 11 additions and one division for every value it reads, so the program waits for memory rather than computing. X and Y take 80 MB each and do not fit in cache, so there are many cache misses, and all threads access the same memory at the same time and share its bandwidth. Also, the 4 vCPUs are 2 cores with 2 hardware threads that share their caches.
+---
+P: In exercise A (moving average), what happens to the speedup if the window W is made much bigger (for example W = 1000)?
+a) It drops to 1, because bigger windows overlap more and create races.
+b) It stays the same, because the speedup only depends on the number of threads.
+c) It gets worse, because each thread now needs a private copy of X.
+d) It improves, because each iteration does more computation per value read from memory.
+R: d
+E: With a bigger window each iteration performs many more additions over values that are already in cache (neighboring windows overlap), so the program becomes less memory-bound and the threads spend more time computing. Overlapping windows only mean reading the same X values, which is never a race.
+
+% ======================================================================
+% EXAM STYLE: exercise B of the lab6 notebook (matrix-vector product)
+% ======================================================================
+---
+T: Exam - Notebook exercise B
+P: In exercise B, why is it better to parallelize the i loop rather than the j loop?
+```
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+```
+a) With j there would be fewer cache misses, but OpenMP cannot split inner loops.
+b) With i: one region, whole rows per thread and no races.
+c) With i all the threads share sum, which saves memory.
+d) Both are equivalent; i is chosen only because it comes first.
+R: b
+E: Parallelizing i gives one parallel region with big, independent tasks: each thread computes whole rows of y and reads contiguous rows of A. Parallelizing j would open and close the region N = 4000 times, with very little work each time, and all threads would add into the same sum, so a reduction would be needed.
+---
+P: In exercise B, the i loop is parallelized with #pragma omp parallel for. Which variables are shared and which are private?
+```
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+```
+a) Shared: A, x, y and sum. Private: i and j.
+b) Shared: A and x. Private: y, i, j and sum.
+c) Shared: A, x, y and N. Private: i, j and sum.
+d) Shared: A, x, y, N and j. Private: i and sum.
+R: c
+E: A, x, y and N are declared outside (A and x are only read; each y[i] is written by one thread). i is the split index. sum and j are declared inside the loop, so they are private. If j had been declared outside (int j; before the pragma) it would be shared and would need private(j).
+---
+P: Why does the matrix-vector product of exercise B (N = 4000) not reach a speedup of 4 on Kaggle?
+a) A (128 MB) does not fit in cache, so threads compete for memory bandwidth.
+b) The reduction on norma2 locks the threads in every iteration of the product.
+c) x is written by all the threads, so there is a race condition on x.
+d) The rows of A have very different costs, so the load is unbalanced.
+R: a
+E: Each element of A is read from RAM and used for a single multiplication, so the loop is memory-bound and suffers many cache misses; all threads share the same memory bandwidth. x (32 KB) is only read and fits in cache. All rows cost the same, so the load is balanced.
+---
+P: Which schedule fits the y = A·x loop of exercise B best?
+a) dynamic, 1, because rows are irregular and must be handed out one at a time.
+b) guided, because the last rows of A have more work.
+c) runtime, because then OpenMP chooses the best schedule by itself.
+d) static, because every row costs the same (N multiplications).
+R: d
+E: All iterations do exactly the same work, so the default static split is the best: no scheduling overhead and contiguous rows for each thread. dynamic or guided only pay off when iterations have different costs. runtime does not choose anything: it reads OMP_SCHEDULE.
+
+% ======================================================================
+% EXAM STYLE: exercise C of the lab6 notebook (independent tasks)
+% ======================================================================
+---
+T: Exam - Notebook exercise C
+P: In exercise C, each section is changed to add its result directly: `resultado_global += procesar(...);`. What is needed now?
+a) Nothing, because each section is run by a single thread.
+b) A barrier after each section, so they add one at a time.
+c) reduction(+:resultado_global), or an atomic in each section.
+d) private(resultado_global) on the parallel sections.
+R: c
+E: Now three threads update the same shared variable, so there is a race condition. reduction(+:resultado_global) gives each section a private copy and adds them at the end; atomic would also work. private would lose the result, and a barrier does not prevent simultaneous updates.
+---
+P: Exercise C is parallelized with parallel sections (3 sections) on Kaggle with 4 threads. What is the best possible speedup?
+a) 4, one task per thread, as in any parallel region.
+b) About 3, because there are only 3 independent tasks.
+c) 2, because sections can only use two threads at once.
+d) 1, because the sections still run one after another.
+R: b
+E: With 3 tasks, at most 3 threads have work and the fourth one stays idle, so the speedup cannot exceed 3. In practice it is somewhat lower, because 2 of the 3 tasks end up sharing a physical core. Asking for more threads does not help.
