@@ -1024,7 +1024,19 @@ d) It cannot be done: the windows overlap and there is a loop-carried dependency
 R: b
 E: The windows overlap, but only when reading X, and several threads reading at the same time is not a problem. Each iteration writes to a different position of Y, and sum is a local variable of each iteration, not an accumulator shared among iterations. That is why no reduction is needed.
 ---
-P: In exercise A (moving average with window W), does the work change much from one iteration to another?
+P: Exercise A of the notebook:
+```
+// Exercise A: moving average. N = 10,000,000 doubles, window W = 10
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+Does the work change much from one iteration to another?
 a) Yes: the last iterations take much longer and dynamic is better.
 b) Hardly at all: only the ones at the edges change, so static works well.
 c) Yes: it depends on how many threads are used, so guided is better.
@@ -1032,7 +1044,22 @@ d) Yes: the first iterations take longer and static,1 is better.
 R: b
 E: Only the first W/2 and the last W/2 iterations have a trimmed window. With such a uniform load the best option is static, which has no scheduling overhead; dynamic would only add cost. It is the opposite of unbalanced.c.
 ---
-P: Exercise B of the notebook: after computing y = A·x, the norm is computed with `norma2 += y[i] * y[i]` in a parallel loop. Which clause is the right one for norma2?
+P: Exercise B of the notebook:
+```
+// Exercise B: y = A·x, with A an N x N matrix and N = 4000
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+// then the norm of y
+double norma2 = 0.0;
+for (int i = 0; i < N; i++)
+    norma2 += y[i] * y[i];
+double norma = sqrt(norma2);
+```
+The norm loop is parallelized with parallel for. Which clause is the right one for norma2?
 a) shared(norma2)
 b) private(norma2)
 c) reduction(+:norma2)
@@ -1183,7 +1210,19 @@ d) #pragma omp parallel for schedule(dynamic, 1) on the i loop
 R: b
 E: Every iteration does almost the same work (a window of W+1 values), so static is best: no scheduling overhead and each thread gets a contiguous block of X and Y, which uses the cache well. reduction(+:sum) is not needed because sum is local to each iteration. The k loop has only W+1 iterations: far too little work to split. dynamic,1 adds overhead and makes neighboring iterations write to the same cache line of Y from different threads (false sharing).
 ---
-P: On Kaggle (4 vCPUs), exercise A (moving average) gets a speedup well below 4 with 4 threads. What is the main reason?
+P: Exercise A of the notebook:
+```
+// Exercise A: moving average. N = 10,000,000 doubles, window W = 10
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+With #pragma omp parallel for on the i loop, on Kaggle (4 vCPUs) the speedup with 4 threads is well below 4. What is the main reason?
 a) There is a race condition on Y that forces the threads to repeat work.
 b) The implicit barrier at the end of the loop makes the threads run one after another.
 c) It is memory-bound: few operations per value read, many cache misses and a shared memory bandwidth.
@@ -1191,7 +1230,19 @@ d) OpenMP runs sequentially any loop that contains another loop inside.
 R: c
 E: Each iteration does about 11 additions and one division for every value it reads, so the program waits for memory rather than computing. X and Y take 80 MB each and do not fit in cache, so there are many cache misses, and all threads access the same memory at the same time and share its bandwidth. Also, the 4 vCPUs are 2 cores with 2 hardware threads that share their caches.
 ---
-P: In exercise A (moving average), what happens to the speedup if the window W is made much bigger (for example W = 1000)?
+P: Exercise A of the notebook, parallelized with #pragma omp parallel for on the i loop:
+```
+// Exercise A: moving average. N = 10,000,000 doubles, window W = 10
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+What happens to the speedup if the window W is made much bigger (for example W = 1000)?
 a) It drops to 1, because bigger windows overlap more and create races.
 b) It stays the same, because the speedup only depends on the number of threads.
 c) It gets worse, because each thread now needs a private copy of X.
@@ -1236,7 +1287,22 @@ d) Shared: A, x, y, N and j. Private: i and sum.
 R: c
 E: A, x, y and N are declared outside (A and x are only read; each y[i] is written by one thread). i is the split index. sum and j are declared inside the loop, so they are private. If j had been declared outside (int j; before the pragma) it would be shared and would need private(j).
 ---
-P: Why does the matrix-vector product of exercise B (N = 4000) not reach a speedup of 4 on Kaggle?
+P: Exercise B of the notebook:
+```
+// Exercise B: y = A·x, with A an N x N matrix and N = 4000
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+// then the norm of y
+double norma2 = 0.0;
+for (int i = 0; i < N; i++)
+    norma2 += y[i] * y[i];
+double norma = sqrt(norma2);
+```
+With parallel for on the i loop of the product, why does it not reach a speedup of 4 on Kaggle (4 vCPUs)?
 a) A (128 MB) does not fit in cache, so threads compete for memory bandwidth.
 b) The reduction on norma2 locks the threads in every iteration of the product.
 c) x is written by all the threads, so there is a race condition on x.
@@ -1244,7 +1310,17 @@ d) The rows of A have very different costs, so the load is unbalanced.
 R: a
 E: Each element of A is read from RAM and used for a single multiplication, so the loop is memory-bound and suffers many cache misses; all threads share the same memory bandwidth. x (32 KB) is only read and fits in cache. All rows cost the same, so the load is balanced.
 ---
-P: Which schedule fits the y = A·x loop of exercise B best?
+P: Exercise B of the notebook:
+```
+// Exercise B: y = A·x, with A an N x N matrix and N = 4000
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+```
+Which schedule fits the i loop best?
 a) dynamic, 1, because rows are irregular and must be handed out one at a time.
 b) guided, because the last rows of A have more work.
 c) runtime, because then OpenMP chooses the best schedule by itself.
@@ -1257,7 +1333,17 @@ E: All iterations do exactly the same work, so the default static split is the b
 % ======================================================================
 ---
 T: Exam - Notebook exercise C
-P: In exercise C, each section is changed to add its result directly: `resultado_global += procesar(...);`. What is needed now?
+P: Exercise C of the notebook (sequential version):
+```
+// Exercise C: three independent tasks. N = 10,000,000
+// procesar(ini, fin) is an expensive loop that adds sin(i)*cos(i) from ini to fin
+double resultado_global = 0.0;
+double r1 = procesar(0, N/3);
+double r2 = procesar(N/3, 2*N/3);
+double r3 = procesar(2*N/3, N);
+resultado_global += r1 + r2 + r3;
+```
+It is parallelized with parallel sections, one section per call, and each section adds its result directly: `resultado_global += procesar(...);`. What is needed now?
 a) Nothing, because each section is run by a single thread.
 b) A barrier after each section, so they add one at a time.
 c) reduction(+:resultado_global), or an atomic in each section.
@@ -1265,7 +1351,17 @@ d) private(resultado_global) on the parallel sections.
 R: c
 E: Now three threads update the same shared variable, so there is a race condition. reduction(+:resultado_global) gives each section a private copy and adds them at the end; atomic would also work. private would lose the result, and a barrier does not prevent simultaneous updates.
 ---
-P: Exercise C is parallelized with parallel sections (3 sections) on Kaggle with 4 threads. What is the best possible speedup?
+P: Exercise C of the notebook (sequential version):
+```
+// Exercise C: three independent tasks. N = 10,000,000
+// procesar(ini, fin) is an expensive loop that adds sin(i)*cos(i) from ini to fin
+double resultado_global = 0.0;
+double r1 = procesar(0, N/3);
+double r2 = procesar(N/3, 2*N/3);
+double r3 = procesar(2*N/3, N);
+resultado_global += r1 + r2 + r3;
+```
+It is parallelized with parallel sections (one section per call) on Kaggle with 4 threads. What is the best possible speedup?
 a) 4, one task per thread, as in any parallel region.
 b) About 3, because there are only 3 independent tasks.
 c) 2, because sections can only use two threads at once.
