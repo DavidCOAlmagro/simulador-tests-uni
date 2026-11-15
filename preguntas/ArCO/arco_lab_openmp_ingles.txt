@@ -78,6 +78,14 @@ R: b
 E: gcc hello.c -o hello -fopenmp. It enables the processing of the #pragma omp directives and links against the OpenMP library (libgomp).
 ---
 P: You compile 01_hello_omp.c (which calls omp_set_num_threads() and omp_get_thread_num()) WITHOUT the -fopenmp flag. What happens?
+```
+// 01_hello_omp.c
+omp_set_num_threads(4);
+#pragma omp parallel
+{
+    printf("Hello world by thread: %d\n", omp_get_thread_num());
+}
+```
 a) It compiles and runs with 4 threads, because omp.h already includes everything needed.
 b) The pragma is ignored and linking fails because the omp_* functions are not defined.
 c) The compiler gives a syntax error when it finds the #pragma omp parallel.
@@ -134,6 +142,14 @@ R: c
 E: Precedence (highest to lowest): num_threads clause > omp_set_num_threads() function > OMP_NUM_THREADS variable. Checked: with the three values the team has 2 threads; removing the clause, 3.
 ---
 P: 01_hello_omp.c calls omp_set_num_threads(4) before the #pragma omp parallel. If you run it with !OMP_NUM_THREADS=2 ./hello, how many «Hello world» lines does it print?
+```
+// 01_hello_omp.c
+omp_set_num_threads(4);
+#pragma omp parallel
+{
+    printf("Hello world by thread: %d\n", omp_get_thread_num());
+}
+```
 a) 2
 b) 4
 c) 6
@@ -142,6 +158,14 @@ R: b
 E: omp_set_num_threads() has priority over the OMP_NUM_THREADS environment variable, so 4 threads are created and each one prints a line.
 ---
 P: You run 01_hello_omp.c (4 threads) five times in a row. What do you observe?
+```
+// 01_hello_omp.c
+omp_set_num_threads(4);
+#pragma omp parallel
+{
+    printf("Hello world by thread: %d\n", omp_get_thread_num());
+}
+```
 a) The 4 lines always come out in the order 0, 1, 2, 3.
 b) The 4 lines come out in a different order depending on the run.
 c) The 4 lines always come out in reverse order: 3, 2, 1, 0.
@@ -212,6 +236,18 @@ R: b
 E: product is declared outside the region (shared); id is declared inside (private, each thread has its own).
 ---
 P: Why does 02_memory_example.c sometimes give a wrong result?
+```
+// 02_memory_example.c
+int product = 2;                  // shared variable
+omp_set_num_threads(4);
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();    // private variable
+    product = product * (id + 1);
+    printf("The thread %d get the result %d\n", id+1, product);
+}
+printf("The result is %d\n", product);
+```
 a) Because omp_get_thread_num() can return the same id to two threads.
 b) Because reading, multiplying and writing product is not indivisible: race condition.
 c) Because the order of the multiplications changes and that changes the result.
@@ -220,6 +256,18 @@ R: b
 E: It is a read-modify-write on a shared variable without synchronization. If two threads read the same value before the other one writes, one of the multiplications is lost.
 ---
 P: In the lab file 02_memory_example.c, product is initialized to 2 and it runs with 4 threads. What is the expected correct result?
+```
+// 02_memory_example.c
+int product = 2;                  // shared variable
+omp_set_num_threads(4);
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();    // private variable
+    product = product * (id + 1);
+    printf("The thread %d get the result %d\n", id+1, product);
+}
+printf("The result is %d\n", product);
+```
 a) 24
 b) 48
 c) 2
@@ -236,6 +284,16 @@ R: b
 E: The result becomes non-deterministic: it depends on the execution order. It is fixed by protecting the access (critical, atomic) or by removing the shared access (reduction, private variables).
 ---
 P: race.c launches 4 threads and each one increments counter (shared) 1,000,000 times with counter++ inside a #pragma omp parallel (without for). What value should come out, and what usually comes out with -O0?
+```
+// race.c
+long counter = 0;                 // declared outside the region: shared
+#pragma omp parallel num_threads(4)
+{
+    for (int i = 0; i < 1000000; i++)
+        counter++;
+}
+printf("Expected 4000000, got %ld\n", counter);
+```
 a) It should be 1,000,000; it is 1,000,000.
 b) It should be 4,000,000; it is usually less.
 c) It should be 4,000,000; it is usually more.
@@ -244,6 +302,16 @@ R: b
 E: With parallel (without for) each thread runs the whole loop: 4 × 1,000,000 = 4,000,000. counter++ is read-add-write without protection, so increments get lost and the result is usually lower (one test gave 1,059,722).
 ---
 P: In race.c the loop is inside #pragma omp parallel, but WITHOUT #pragma omp for. What does that imply?
+```
+// race.c
+long counter = 0;                 // declared outside the region: shared
+#pragma omp parallel num_threads(4)
+{
+    for (int i = 0; i < 1000000; i++)
+        counter++;
+}
+printf("Expected 4000000, got %ld\n", counter);
+```
 a) The iterations are automatically split among the 4 threads.
 b) Each thread runs all the iterations: the work is repeated.
 c) Only the master thread runs the loop and the others wait.
@@ -252,6 +320,16 @@ R: b
 E: parallel only creates the team; to split iterations you need the for worksharing construct (#pragma omp for or parallel for). Without it, each thread runs its own complete loop, which is why 4,000,000 is expected.
 ---
 P: You compile race.c with -O2 instead of -O0 and the result is correct (or almost) much more often. Why?
+```
+// race.c
+long counter = 0;                 // declared outside the region: shared
+#pragma omp parallel num_threads(4)
+{
+    for (int i = 0; i < 1000000; i++)
+        counter++;
+}
+printf("Expected 4000000, got %ld\n", counter);
+```
 a) -O2 adds automatic synchronization to shared accesses.
 b) The race still exists, but the optimized loop hides it.
 c) -O2 turns counter into a private variable of each thread.
@@ -260,6 +338,16 @@ R: b
 E: The optimizer turns the loop into a single addition per thread, so there is hardly any window for the race. The code is still incorrect: at -O2 both 3,000,000 and 4,000,000 came out in the tests.
 ---
 P: In race.c (counter = 0 before the region) you add private(counter) to the parallel directive. What does it print at the end?
+```
+// race.c
+long counter = 0;                 // declared outside the region: shared
+#pragma omp parallel num_threads(4)
+{
+    for (int i = 0; i < 1000000; i++)
+        counter++;
+}
+printf("Expected 4000000, got %ld\n", counter);
+```
 a) 4,000,000
 b) 1,000,000
 c) 0
@@ -337,6 +425,21 @@ R: a
 E: Rule from the session: if your problem can be solved with atomic, you must use atomic.
 ---
 P: In 03_critical.c the multiplication product = product * (id + 1) is inside a #pragma omp critical, but the printf with product is outside. What do you observe?
+```
+// 03_critical.c
+int product = 1;                  // shared variable
+omp_set_num_threads(4);
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();    // private variable
+    #pragma omp critical
+    {
+        product = product * (id + 1);
+    }
+    printf("The thread %d get the result %d\n", id+1, product);
+}
+printf("The result is %d\n", product);
+```
 a) The final result is always 24 and each thread prints the products 1, 2, 6 and 24 in order.
 b) The final result is always 24, but what each thread prints can vary because the printf is outside.
 c) The final result is still wrong sometimes, because critical does not protect reading product.
@@ -400,6 +503,16 @@ R: b
 E: Without a barrier each thread goes at its own pace and can print "phase 2" while others are still in phase 1.
 ---
 P: race.c is fixed in two ways: protecting counter++ with critical and with atomic. Which one is faster?
+```
+// race.c
+long counter = 0;                 // declared outside the region: shared
+#pragma omp parallel num_threads(4)
+{
+    for (int i = 0; i < 1000000; i++)
+        counter++;
+}
+printf("Expected 4000000, got %ld\n", counter);
+```
 a) critical
 b) atomic
 c) They take exactly the same time.
@@ -445,6 +558,18 @@ R: b
 E: It is initialized to the identity element of the operator: 1 for *, 0 for +, etc. At the end the copies are combined with the original value.
 ---
 P: 05_reduction.c (4 threads, product = 1) uses #pragma omp parallel reduction(*:product) and each thread does product = product * (id + 1) and prints it. What do the per-thread lines print, and what is the final result?
+```
+// 05_reduction.c
+int product = 1;                  // shared variable
+omp_set_num_threads(4);
+#pragma omp parallel reduction(*:product)
+{
+    int id = omp_get_thread_num();    // private variable
+    product = product * (id + 1);
+    printf("The thread %d get the result %d\n", id+1, product);
+}
+printf("The result is %d\n", product);
+```
 a) Each thread prints the accumulated product (1, 2, 6, 24) and the final result is 24.
 b) Each thread prints its id+1 (1, 2, 3, 4) and the final result is 24.
 c) All the lines print 24, the same as the final result.
@@ -453,6 +578,16 @@ R: b
 E: Each private copy is 1 × (id+1) = id+1. They are not accumulated products, because threads do not see each other's copies. At the end they are combined: 1·1·2·3·4 = 24 (checked).
 ---
 P: Order critical, atomic and reduction from CHEAPEST to MOST EXPENSIVE to fix race.c.
+```
+// race.c
+long counter = 0;                 // declared outside the region: shared
+#pragma omp parallel num_threads(4)
+{
+    for (int i = 0; i < 1000000; i++)
+        counter++;
+}
+printf("Expected 4000000, got %ld\n", counter);
+```
 a) critical < atomic < reduction
 b) reduction < atomic < critical
 c) atomic < critical < reduction
@@ -461,6 +596,16 @@ R: b
 E: reduction does not synchronize in every iteration (it only combines at the end), atomic uses one atomic instruction per increment and critical one lock per increment. Session takeaway: «Can you use reduction? Use it. If not, atomic. critical is the last resort».
 ---
 P: How is race.c fixed with a reduction?
+```
+// race.c
+long counter = 0;                 // declared outside the region: shared
+#pragma omp parallel num_threads(4)
+{
+    for (int i = 0; i < 1000000; i++)
+        counter++;
+}
+printf("Expected 4000000, got %ld\n", counter);
+```
 a) Putting #pragma omp reduction(+:counter) right before counter++.
 b) Adding reduction(+:counter) to the #pragma omp parallel.
 c) Declaring counter inside the parallel region.
@@ -537,6 +682,14 @@ R: a
 E: It is the combined form, equivalent to #pragma omp parallel { #pragma omp for ... } (see 06_parallel_for.c and 06_parallel_for_verbose.c). Option d describes #pragma omp for on its own.
 ---
 P: 06_parallel_for.c: 4 threads, n = 12, #pragma omp parallel for with GCC's default schedule. Which iterations does thread 1 run?
+```
+// 06_parallel_for.c
+omp_set_num_threads(4);
+int n = 12;
+#pragma omp parallel for
+for (int i = 0; i < n; i++)
+    printf("The thread %d process the iteration %d\n", omp_get_thread_num(), i);
+```
 a) 1, 5, 9
 b) 3, 4, 5
 c) 4, 5, 6, 7
@@ -553,6 +706,17 @@ R: a
 E: Contiguous blocks as equal as possible; the first threads get one extra iteration (checked with gcc).
 ---
 P: In 06_parallel_for_verbose.c you add a printf inside #pragma omp parallel but BEFORE #pragma omp for (4 threads). How many times is it printed?
+```
+// 06_parallel_for_verbose.c
+omp_set_num_threads(4);
+int n = 12;
+#pragma omp parallel
+{
+    #pragma omp for
+    for (int i = 0; i < n; i++)
+        printf("The thread %d process the iteration %d\n", omp_get_thread_num(), i);
+}
+```
 a) 1
 b) 4
 c) 12
@@ -621,6 +785,14 @@ R: b
 E: It balances the load better when iterations have different costs, at the price of some scheduling overhead.
 ---
 P: 07_static.c: 4 threads, 12 iterations, schedule(static, 4). What happens?
+```
+// 07_static.c
+omp_set_num_threads(4);
+int n = 12;
+#pragma omp parallel for schedule(static, 4)
+for (int i = 0; i < n; i++)
+    printf("The thread %d process the iteration %d\n", omp_get_thread_num(), i);
+```
 a) Each thread does 3 consecutive iterations.
 b) T0 0-3, T1 4-7, T2 8-11 and T3 does nothing.
 c) T0 0-3 and 8-11, T1 4-7, and T2 and T3 nothing.
@@ -645,6 +817,14 @@ R: b
 E: Chunks of 1 in turns: T0 0,4,8; T1 1,5,9; T2 2,6; T3 3,7.
 ---
 P: You run 08_dynamic.c (schedule(dynamic, 2), 12 iterations, 4 threads) five times. Does the assignment of iterations to threads change?
+```
+// 08_dynamic.c
+omp_set_num_threads(4);
+int n = 12;
+#pragma omp parallel for schedule(dynamic, 2)
+for (int i = 0; i < n; i++)
+    printf("The thread %d process the iteration %d\n", omp_get_thread_num(), i);
+```
 a) No: the assignment is always the same in every run.
 b) Yes: each pair of iterations goes to whichever thread is free at that moment.
 c) It only changes if the number of threads changes from one run to another.
@@ -661,6 +841,13 @@ R: a
 E: So schedules can be compared without recompiling. unbalanced.c uses it: OMP_SCHEDULE=dynamic,4 ./unbalanced.
 ---
 P: unbalanced.c has 40 iterations with 4 threads, and iteration i sleeps i × 2 ms (the last ones are the slowest). Why is schedule(static) without a chunk size the slowest schedule?
+```
+// unbalanced.c
+// schedule(runtime) takes the schedule from OMP_SCHEDULE
+#pragma omp parallel for num_threads(4) schedule(runtime)
+for (int i = 0; i < 40; i++)
+    usleep(i * 2000);             // iteration i costs i * 2 ms
+```
 a) Because static has more scheduling overhead than dynamic.
 b) Because the last thread gets the most expensive iterations and the others wait for it.
 c) Because with static only the master thread works and the others wait.
@@ -669,6 +856,13 @@ R: b
 E: It assigns contiguous blocks: the last thread gets iterations 30-39, the most expensive ones, and the rest finish earlier and wait (load imbalance). The total time is set by the busiest thread: (30+…+39) × 2 ms = 0.69 s, which matches the measurement. The ideal would be 1.56 s / 4 = 0.39 s.
 ---
 P: In unbalanced.c (iterations with increasing cost), which schedules get closest to the ideal time of 0.39 s?
+```
+// unbalanced.c
+// schedule(runtime) takes the schedule from OMP_SCHEDULE
+#pragma omp parallel for num_threads(4) schedule(runtime)
+for (int i = 0; i < 40; i++)
+    usleep(i * 2000);             // iteration i costs i * 2 ms
+```
 a) static without chunk size (about 0.39 s)
 b) static,1, dynamic,1 and guided (about 0.42 s)
 c) dynamic,4 (about 0.40 s), because it hands out work fewer times
@@ -677,6 +871,13 @@ R: b
 E: Measurements: static 0.69 s; static,1 0.42 s; dynamic,1 0.42 s; guided 0.42 s; dynamic,4 0.52 s. Interleaving iterations or handing them out dynamically balances the load; big blocks unbalance it.
 ---
 P: What is the total work of unbalanced.c (i × 2 ms, i = 0..39) and the ideal time with 4 threads?
+```
+// unbalanced.c
+// schedule(runtime) takes the schedule from OMP_SCHEDULE
+#pragma omp parallel for num_threads(4) schedule(runtime)
+for (int i = 0; i < 40; i++)
+    usleep(i * 2000);             // iteration i costs i * 2 ms
+```
 a) 1.56 s total; 0.39 s ideal
 b) 0.78 s total; 0.20 s ideal
 c) 1.56 s total; 0.78 s ideal
@@ -722,6 +923,17 @@ R: a
 E: It is used to split a fixed number of independent code blocks. It ends with an implicit barrier, unless nowait is used.
 ---
 P: 09_section.c: omp_set_num_threads(4) and #pragma omp parallel sections with 2 sections. If you print omp_get_num_threads() inside a section, what comes out?
+```
+// 09_section.c
+omp_set_num_threads(4);
+#pragma omp parallel sections
+{
+    #pragma omp section
+    printf("Section 1 with thread %d\n", omp_get_thread_num());
+    #pragma omp section
+    printf("Section 2 with thread %d\n", omp_get_thread_num());
+}
+```
 a) 2
 b) 4
 c) 1
@@ -746,6 +958,17 @@ R: a
 E: Typical use: reading input or printing a header inside a parallel region. It is not necessarily thread 0: it is the first one to arrive, and that varies between runs. Without nowait there is an implicit barrier at the end.
 ---
 P: In 10_single.c, each thread prints "Hello world" after the single block. What changes when you add nowait to the single?
+```
+// 10_single.c
+omp_set_num_threads(4);
+#pragma omp parallel
+{
+    #pragma omp single
+    printf("Single executed by thread %d\n", omp_get_thread_num());
+    // an implicit barrier is placed here
+    printf("Hello world by thread: %d\n", omp_get_thread_num());
+}
+```
 a) Nothing: the single line still always comes out first.
 b) Without the barrier at the end of the single, some "Hello" may come out before it.
 c) The single block is now run by all threads, one after another.
@@ -778,6 +1001,18 @@ R: b
 E: omp_set_nested() is deprecated since OpenMP 5.0; the file 11_nested.c uses the current API.
 ---
 P: 11_nested.c: 4 threads in the outer region, omp_set_max_active_levels(2), and each thread opens an inner region with num_threads(2) that prints a line. How many «inner» lines are printed?
+```
+// 11_nested.c
+omp_set_num_threads(4);
+omp_set_max_active_levels(2);
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    printf("Thread %d: outer region\n", id);
+    #pragma omp parallel num_threads(2)
+    printf("\tThread %d of team %d: inner\n", omp_get_thread_num(), id);
+}
+```
 a) 2
 b) 4
 c) 8
@@ -786,6 +1021,18 @@ R: c
 E: 4 outer threads × 2 inner threads = 8 inner lines, plus 4 outer lines: 12 lines in total (checked).
 ---
 P: In 11_nested.c you change to omp_set_max_active_levels(1). What happens to the inner region?
+```
+// 11_nested.c
+omp_set_num_threads(4);
+omp_set_max_active_levels(2);
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    printf("Thread %d: outer region\n", id);
+    #pragma omp parallel num_threads(2)
+    printf("\tThread %d of team %d: inner\n", omp_get_thread_num(), id);
+}
+```
 a) It gives an error, because there is a parallel region inside another one.
 b) It runs with a single thread: 4 inner lines come out, all «Thread 0».
 c) It does not run, so no inner line appears.
@@ -831,6 +1078,15 @@ R: a
 E: That way the combined space of the nested loops is vectorized (or split), not just the innermost one.
 ---
 P: In 13_simd_reduction.c the loop does sum += a[i] + b[i] with #pragma omp simd reduction(+:sum). Why is reduction needed?
+```
+// 13_simd_reduction.c
+int n = 16;                       // a[i], b[i] = rand() % 10
+float sum = 0;
+#pragma omp simd reduction(+:sum)
+for (int i = 0; i < n; ++i)
+    sum += a[i] + b[i];
+printf("The sum of all values of a and b is %f\n", sum);
+```
 a) It is not needed: the compiler already knows that sum is an addition.
 b) Each lane keeps a partial sum that is combined at the end.
 c) So that the loop, besides being vectorized, is split among several threads.
@@ -847,6 +1103,15 @@ R: a
 E: The compiler reports it with messages like «12_simd.c:27:17: optimized: loop vectorized using 16 byte vectors».
 ---
 P: You compile 12_simd.c at -O1. What happens with and without #pragma omp simd?
+```
+// 12_simd.c
+float square(float x) { return x * x; }
+
+int n = 16;                       // a[i] = rand() % 10
+#pragma omp simd
+for (int i = 0; i < n; ++i)
+    c[i] = square(a[i]);
+```
 a) It is vectorized in both cases, because -O1 already vectorizes.
 b) With the pragma it is vectorized; without it, at -O1 it is not.
 c) It is not vectorized in any case, because -O2 is needed.
@@ -1024,7 +1289,19 @@ d) It cannot be done: the windows overlap and there is a loop-carried dependency
 R: b
 E: The windows overlap, but only when reading X, and several threads reading at the same time is not a problem. Each iteration writes to a different position of Y, and sum is a local variable of each iteration, not an accumulator shared among iterations. That is why no reduction is needed.
 ---
-P: In exercise A (moving average with window W), does the work change much from one iteration to another?
+P: Exercise A of the notebook:
+```
+// Exercise A: moving average. N = 10,000,000 doubles, window W = 10
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+Does the work change much from one iteration to another?
 a) Yes: the last iterations take much longer and dynamic is better.
 b) Hardly at all: only the ones at the edges change, so static works well.
 c) Yes: it depends on how many threads are used, so guided is better.
@@ -1032,7 +1309,22 @@ d) Yes: the first iterations take longer and static,1 is better.
 R: b
 E: Only the first W/2 and the last W/2 iterations have a trimmed window. With such a uniform load the best option is static, which has no scheduling overhead; dynamic would only add cost. It is the opposite of unbalanced.c.
 ---
-P: Exercise B of the notebook: after computing y = A·x, the norm is computed with `norma2 += y[i] * y[i]` in a parallel loop. Which clause is the right one for norma2?
+P: Exercise B of the notebook:
+```
+// Exercise B: y = A·x, with A an N x N matrix and N = 4000
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+// then the norm of y
+double norma2 = 0.0;
+for (int i = 0; i < N; i++)
+    norma2 += y[i] * y[i];
+double norma = sqrt(norma2);
+```
+The norm loop is parallelized with parallel for. Which clause is the right one for norma2?
 a) shared(norma2)
 b) private(norma2)
 c) reduction(+:norma2)
@@ -1183,7 +1475,19 @@ d) #pragma omp parallel for schedule(dynamic, 1) on the i loop
 R: b
 E: Every iteration does almost the same work (a window of W+1 values), so static is best: no scheduling overhead and each thread gets a contiguous block of X and Y, which uses the cache well. reduction(+:sum) is not needed because sum is local to each iteration. The k loop has only W+1 iterations: far too little work to split. dynamic,1 adds overhead and makes neighboring iterations write to the same cache line of Y from different threads (false sharing).
 ---
-P: On Kaggle (4 vCPUs), exercise A (moving average) gets a speedup well below 4 with 4 threads. What is the main reason?
+P: Exercise A of the notebook:
+```
+// Exercise A: moving average. N = 10,000,000 doubles, window W = 10
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+With #pragma omp parallel for on the i loop, on Kaggle (4 vCPUs) the speedup with 4 threads is well below 4. What is the main reason?
 a) There is a race condition on Y that forces the threads to repeat work.
 b) The implicit barrier at the end of the loop makes the threads run one after another.
 c) It is memory-bound: few operations per value read, many cache misses and a shared memory bandwidth.
@@ -1191,7 +1495,19 @@ d) OpenMP runs sequentially any loop that contains another loop inside.
 R: c
 E: Each iteration does about 11 additions and one division for every value it reads, so the program waits for memory rather than computing. X and Y take 80 MB each and do not fit in cache, so there are many cache misses, and all threads access the same memory at the same time and share its bandwidth. Also, the 4 vCPUs are 2 cores with 2 hardware threads that share their caches.
 ---
-P: In exercise A (moving average), what happens to the speedup if the window W is made much bigger (for example W = 1000)?
+P: Exercise A of the notebook, parallelized with #pragma omp parallel for on the i loop:
+```
+// Exercise A: moving average. N = 10,000,000 doubles, window W = 10
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    int ini = (i < W/2) ? 0 : i - W/2;
+    int fin = (i + W/2 >= N) ? N - 1 : i + W/2;
+    for (int k = ini; k <= fin; k++)
+        sum += X[k];
+    Y[i] = sum / (fin - ini + 1);
+}
+```
+What happens to the speedup if the window W is made much bigger (for example W = 1000)?
 a) It drops to 1, because bigger windows overlap more and create races.
 b) It stays the same, because the speedup only depends on the number of threads.
 c) It gets worse, because each thread now needs a private copy of X.
@@ -1236,7 +1552,22 @@ d) Shared: A, x, y, N and j. Private: i and sum.
 R: c
 E: A, x, y and N are declared outside (A and x are only read; each y[i] is written by one thread). i is the split index. sum and j are declared inside the loop, so they are private. If j had been declared outside (int j; before the pragma) it would be shared and would need private(j).
 ---
-P: Why does the matrix-vector product of exercise B (N = 4000) not reach a speedup of 4 on Kaggle?
+P: Exercise B of the notebook:
+```
+// Exercise B: y = A·x, with A an N x N matrix and N = 4000
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+// then the norm of y
+double norma2 = 0.0;
+for (int i = 0; i < N; i++)
+    norma2 += y[i] * y[i];
+double norma = sqrt(norma2);
+```
+With parallel for on the i loop of the product, why does it not reach a speedup of 4 on Kaggle (4 vCPUs)?
 a) A (128 MB) does not fit in cache, so threads compete for memory bandwidth.
 b) The reduction on norma2 locks the threads in every iteration of the product.
 c) x is written by all the threads, so there is a race condition on x.
@@ -1244,7 +1575,17 @@ d) The rows of A have very different costs, so the load is unbalanced.
 R: a
 E: Each element of A is read from RAM and used for a single multiplication, so the loop is memory-bound and suffers many cache misses; all threads share the same memory bandwidth. x (32 KB) is only read and fits in cache. All rows cost the same, so the load is balanced.
 ---
-P: Which schedule fits the y = A·x loop of exercise B best?
+P: Exercise B of the notebook:
+```
+// Exercise B: y = A·x, with A an N x N matrix and N = 4000
+for (int i = 0; i < N; i++) {
+    double sum = 0.0;
+    for (int j = 0; j < N; j++)
+        sum += A[i*N + j] * x[j];
+    y[i] = sum;
+}
+```
+Which schedule fits the i loop best?
 a) dynamic, 1, because rows are irregular and must be handed out one at a time.
 b) guided, because the last rows of A have more work.
 c) runtime, because then OpenMP chooses the best schedule by itself.
@@ -1257,7 +1598,17 @@ E: All iterations do exactly the same work, so the default static split is the b
 % ======================================================================
 ---
 T: Exam - Notebook exercise C
-P: In exercise C, each section is changed to add its result directly: `resultado_global += procesar(...);`. What is needed now?
+P: Exercise C of the notebook (sequential version):
+```
+// Exercise C: three independent tasks. N = 10,000,000
+// procesar(ini, fin) is an expensive loop that adds sin(i)*cos(i) from ini to fin
+double resultado_global = 0.0;
+double r1 = procesar(0, N/3);
+double r2 = procesar(N/3, 2*N/3);
+double r3 = procesar(2*N/3, N);
+resultado_global += r1 + r2 + r3;
+```
+It is parallelized with parallel sections, one section per call, and each section adds its result directly: `resultado_global += procesar(...);`. What is needed now?
 a) Nothing, because each section is run by a single thread.
 b) A barrier after each section, so they add one at a time.
 c) reduction(+:resultado_global), or an atomic in each section.
@@ -1265,7 +1616,17 @@ d) private(resultado_global) on the parallel sections.
 R: c
 E: Now three threads update the same shared variable, so there is a race condition. reduction(+:resultado_global) gives each section a private copy and adds them at the end; atomic would also work. private would lose the result, and a barrier does not prevent simultaneous updates.
 ---
-P: Exercise C is parallelized with parallel sections (3 sections) on Kaggle with 4 threads. What is the best possible speedup?
+P: Exercise C of the notebook (sequential version):
+```
+// Exercise C: three independent tasks. N = 10,000,000
+// procesar(ini, fin) is an expensive loop that adds sin(i)*cos(i) from ini to fin
+double resultado_global = 0.0;
+double r1 = procesar(0, N/3);
+double r2 = procesar(N/3, 2*N/3);
+double r3 = procesar(2*N/3, N);
+resultado_global += r1 + r2 + r3;
+```
+It is parallelized with parallel sections (one section per call) on Kaggle with 4 threads. What is the best possible speedup?
 a) 4, one task per thread, as in any parallel region.
 b) About 3, because there are only 3 independent tasks.
 c) 2, because sections can only use two threads at once.
