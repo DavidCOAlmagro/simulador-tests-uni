@@ -1,5 +1,7 @@
 # Test tipo autoescuela
 
+![Vista del simulador de tests en modo práctica](docs/portada-simulador.png)
+
 Simulador de exámenes tipo test para estudiar las asignaturas de la carrera, al
 estilo de los test de la autoescuela: modo práctica con explicaciones, modo
 examen con tiempo y repaso de las preguntas falladas. Las preguntas se escriben
