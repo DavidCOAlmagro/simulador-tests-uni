@@ -62,6 +62,8 @@ FIELD_RE = re.compile(r"^(P|R|E|T)\s*:\s?(.*)$")
 OPTION_RE = re.compile(r"^([A-Za-z])\)\s?(.*)$")
 DIRECTIVE_RE = re.compile(r"^@(\w+)\s*[:=]?\s*(.*)$")
 SEPARATOR_RE = re.compile(r"^-{3,}$")
+# Imagen en una línea propia: ![descripción](carpeta/figura.png), con la ruta relativa al .txt
+IMAGE_RE = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)$")
 # Opciones que se refieren a otras: si aparecen, no se barajan las opciones.
 REFERENTIAL_RE = re.compile(
     r"anteriores|lo anterior|\bninguna (es|de)\b|\btodas (las respuestas|las opciones|son)\b"
@@ -322,6 +324,20 @@ def _build(cur: dict, source: str, name: str, warnings: list[str]) -> Question |
                     line=cur["line"])
 
 
+def image_paths(text: str) -> list[str]:
+    """Rutas de las imágenes de un texto (las líneas dentro de ``` no cuentan)."""
+    paths, in_fence = [], False
+    for line in text.split("\n"):
+        st = line.strip()
+        if st.startswith("```"):
+            in_fence = not in_fence
+        elif not in_fence:
+            m = IMAGE_RE.match(st)
+            if m:
+                paths.append(m.group(2).strip())
+    return paths
+
+
 def load_bank(path: Path) -> Bank:
     data = path.read_bytes()
     try:
@@ -329,6 +345,10 @@ def load_bank(path: Path) -> Bank:
     except UnicodeDecodeError:
         text = data.decode("latin-1")
     settings, questions, warnings = parse_text(text, str(path))
+    for q in questions:
+        for img in image_paths(q.text + "\n" + q.explanation):
+            if not (path.parent / img).is_file():
+                warnings.append(f"{path.name}:{q.line}: no se encuentra la imagen {img}")
     return Bank(path=path, title=settings.get("titulo") or path.stem, settings=settings,
                 questions=questions, warnings=warnings)
 
@@ -613,7 +633,7 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
                 w.bind("<Leave>", lambda *_: on_leave())
 
     class RichText(tk.Frame):
-        """Bloque de texto de solo lectura: párrafos, bloques ``` en monoespaciada y líneas «Fuente:».
+        """Bloque de texto de solo lectura: párrafos, bloques ``` en monoespaciada, imágenes y líneas «Fuente:».
         Hecho con Labels para que Tk calcule su tamaño de forma exacta."""
         def __init__(self, parent, app, font, bg, fg=None, sources=False):
             super().__init__(parent, bg=bg)
@@ -621,6 +641,7 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
             self.fg = fg or app.P["text"]
             self.sources = sources
             self.wrapping: list[tk.Label] = []
+            self.images: list[tuple[tk.Label, tk.PhotoImage]] = []
             self.bind("<Configure>", lambda *_: self._wrap(self.winfo_width()))
 
         def _blocks(self, text):
@@ -642,6 +663,9 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
                     in_code = not in_code
                 elif in_code:
                     code.append(line)
+                elif IMAGE_RE.match(st):
+                    flush_para()
+                    blocks.append(("image", IMAGE_RE.match(st).group(2).strip()))
                 elif self.sources and st.startswith("Fuente:"):
                     flush_para()
                     blocks.append(("source", st))
@@ -652,17 +676,29 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
             flush_para()
             return [(k, t) for k, t in blocks if t.strip()]
 
-        def set(self, text):
+        def set(self, text, folder=None):
+            """folder es la carpeta del .txt, desde donde se buscan las imágenes."""
             P, F = self.app.P, self.app.F
             for w in self.winfo_children():
                 w.destroy()
             self.wrapping = []
+            self.images = []
             for i, (kind, body) in enumerate(self._blocks(text)):
                 top = 0 if i == 0 else 8
                 if kind == "code":
                     lbl = tk.Label(self, text=body, font=F["mono"], bg=P["code_bg"], fg=P["text"],
                                    justify="left", anchor="w", padx=14, pady=9)
                     lbl.pack(fill="x", pady=(top, 0))
+                elif kind == "image":
+                    try:
+                        photo = tk.PhotoImage(master=self, file=str(Path(folder or ".") / body))
+                    except tk.TclError:
+                        tk.Label(self, text=f"[No se puede mostrar la imagen {body}]", font=F["tiny"], bg=self.bg,
+                                 fg=P["faint"], anchor="w").pack(fill="x", pady=(top, 0))
+                        continue
+                    lbl = tk.Label(self, image=photo, bg=self.bg, bd=0)
+                    lbl.pack(anchor="w", pady=(top, 0))
+                    self.images.append((lbl, photo))
                 elif kind == "source":
                     lbl = tk.Label(self, text=body, font=F["tiny"], bg=self.bg, fg=P["faint"],
                                    justify="left", anchor="w")
@@ -677,6 +713,13 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
         def _wrap(self, width):
             for lbl in self.wrapping:
                 lbl.configure(wraplength=max(200, width - 4))
+            for lbl, photo in self.images:
+                # si no cabe a lo ancho, se reduce (Tk solo divide entre números enteros)
+                n = max(1, -(-photo.width() // max(200, width)))
+                if width > 1 and getattr(lbl, "step", 1) != n:
+                    lbl.step = n
+                    lbl.shown = photo.subsample(n) if n > 1 else photo
+                    lbl.configure(image=lbl.shown)
 
     class Scroller(tk.Frame):
         """Columna desplazable; si maxwidth, el contenido se centra con ese ancho máximo."""
@@ -1302,6 +1345,13 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
             try:
                 folder.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(path, dest)
+                # y las imágenes que usa, si están en su carpeta o en una subcarpeta
+                for q in load_bank(path).questions:
+                    for img in image_paths(q.text + "\n" + q.explanation):
+                        src = (path.parent / img).resolve()
+                        if src.is_file() and src.is_relative_to(path.parent.resolve()):
+                            (folder / img).parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(src, folder / img)
             except OSError as e:
                 self.app.dialog("No se pudo copiar el fichero", f"{path}\n\n{e}")
                 return None
@@ -1656,7 +1706,7 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
             self.progress_lbl.configure(text=f"PREGUNTA {i + 1} DE {len(self.items)}")
             meta = [x for x in (q.topic, f"{Path(q.source).name}:{q.line}" if q.source else "") if x]
             self.meta_lbl.configure(text="   ·   ".join(meta))
-            self.q_text.set(q.text)
+            self.q_text.set(q.text, Path(q.source).parent)
             if q.multiple:
                 self.hint.configure(text=f"RESPUESTA MÚLTIPLE · MARCA {len(q.correct)}")
                 self.hint.pack(anchor="w", pady=(10, 0), before=self.opts)
@@ -1706,7 +1756,8 @@ def run_gui(files: list[str], zoom: float, mainloop: bool = True):
                 color = P["muted"]
             self.verdict.configure(text=text, fg=color)
             self.stripe.configure(bg=color)
-            self.e_text.set(remap_letters(q.explanation, item) or "Esta pregunta no tiene explicación.")
+            self.e_text.set(remap_letters(q.explanation, item) or "Esta pregunta no tiene explicación.",
+                            Path(q.source).parent)
             self.expl.pack(fill="x", pady=(16, 0))
 
         def select_key(self, pos: int) -> None:
