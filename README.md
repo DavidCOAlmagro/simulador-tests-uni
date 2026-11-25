@@ -97,6 +97,10 @@ P: Siguiente pregunta...
 - Para código, ponlo entre líneas con ```` ``` ````: se verá en letra
   monoespaciada y dentro no se interpreta nada (ni `%`, ni `a)`, ni `---`).
   `` `así` `` marca código dentro de una línea.
+- Para poner una imagen (PNG o GIF), escribe en una línea aparte
+  `![descripción](img/figura.png)`, en el enunciado o en la explicación. La ruta es
+  relativa al .txt. La descripción no se ve en pantalla, pero se copia con «Copiar
+  pregunta», así que conviene que cuente lo que sale en la figura.
 - Las letras pueden ir en mayúscula o minúscula: `A)` o `a)`.
 - Si alguna opción hace referencia a otras («todas las anteriores», «a y b»…),
   las opciones de esa pregunta no se barajan.
