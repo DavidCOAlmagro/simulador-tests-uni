@@ -1,0 +1,215 @@
+% Modelo B de los exámenes de práctica de Sistemas Inteligentes (42321, UCLM, curso 2026/27).
+% El PDF no trae soluciones: las respuestas y explicaciones son añadidas, no oficiales.
+% Las figuras están recortadas del PDF, en img/.
+
+@titulo: Sistemas Inteligentes - Modelo B
+@tiempo: 90
+@penalizacion: 0
+@preguntas: 20
+@reparto: Theory=6; Problem formulation=3; Problem solving=5; Loopover laboratory=4; Individual project=2
+
+% ======================================================================
+% Theory
+% ======================================================================
+---
+T: Theory
+P: In a turn-based dice game, the state consists of the board, whose turn it is and the dice results. All players can see this information. How is the environment classified in terms of observability, transitions and agents?
+a) Fully observable, deterministic and single-agent.
+b) Fully observable, stochastic and multi-agent.
+c) Partially observable, deterministic and single-agent.
+d) Partially observable, stochastic and single-agent.
+R: b
+E: Todos ven el estado completo: totalmente observable. Los dados lo hacen estocástico y hay varios jugadores: multiagente.
+Fuente: Modelo B, pregunta 1.
+---
+P: A* uses h(S)=6 and h(A)=2, and the edge S→A has cost 3. What does this single edge establish?
+a) The heuristic necessarily overestimates h*(S).
+b) The heuristic is consistent throughout the graph.
+c) Consistency fails on S→A because 6>3+2.
+d) The graph has negative edge costs.
+R: c
+E: Consistencia: h(S) ≤ coste + h(A). Aquí 6 > 3+2 = 5, así que falla en esa arista. Una arista no basta para saber si h sobrestima h*.
+Fuente: Modelo B, pregunta 2.
+---
+P: Once a variable has been selected, what does the least-constraining-value (LCV) heuristic select?
+a) The largest numerical value, irrespective of the constraints.
+b) The value that rules out the fewest possibilities for unassigned neighbouring variables.
+c) The variable with the smallest domain.
+d) The value that immediately rules out the most possibilities.
+R: b
+E: LCV elige el VALOR que menos opciones quita a las vecinas. Elegir la variable con menor dominio es MRV.
+Fuente: Modelo B, pregunta 3.
+---
+P: A MAX node has secured α=8. While visiting a MIN child, it sees that child's first leaf has value 6. What follows for the MIN branch?
+a) The MIN node has an exact value of 6.
+b) The remaining leaves all have value 6 by consistency.
+c) The MIN node will necessarily increase α.
+d) The remaining leaves of that MIN node can be pruned.
+R: d
+E: El MIN vale como mucho 6, y MAX ya tiene 8 asegurado: β=6 ≤ α=8, se corta. El valor exacto del MIN no se sabe.
+Fuente: Modelo B, pregunta 4.
+---
+P: What is the effect of α=0 on a Q-learning update if the TD target differs from the current value?
+a) The discount factor automatically becomes zero.
+b) Q is replaced with the target.
+c) Q keeps its previous value in that update.
+d) Q becomes equal to the reward.
+R: c
+E: Q ← Q + α·(objetivo − Q). Con α=0 no se suma nada: Q se queda igual.
+Fuente: Modelo B, pregunta 5.
+---
+P: Roulette-wheel selection uses positive fitness values of 2, 3 and 5 for P, Q and R respectively. What is the probability of selecting Q on one draw?
+a) 0.60.
+b) 0.50.
+c) 0.33.
+d) 0.30.
+R: d
+E: Ruleta: p = f/F = 3/(2+3+5) = 0.30.
+Fuente: Modelo B, pregunta 6.
+% ======================================================================
+% Problem formulation
+% ======================================================================
+---
+T: Problem formulation
+P: A vehicle reaches a junction with some battery charge remaining. The tunnel requires two units of charge and a charging stop can be used once. Which state representation is sufficient?
+a) The junction, the remaining charge and whether the charging stop has already been used.
+b) The junction and the initial charge.
+c) Only the charge and the accumulated cost.
+d) Only the junction and the distance from the start.
+R: a
+E: Hace falta todo lo que afecta a lo que se puede hacer después: dónde está, cuánta carga queda y si ya usó la parada.
+Fuente: Modelo B, pregunta 7.
+---
+P: There is one variable Rᵢ per column for placing queens. For columns i≠j, which constraints prevent queens from sharing a row or diagonal?
+a) Only Rᵢ≠Rⱼ.
+b) Rᵢ+i=Rⱼ+j.
+c) Rᵢ≠Rⱼ and abs(Rᵢ−Rⱼ)≠abs(i−j).
+d) Rᵢ≠Rⱼ and abs(Rᵢ−Rⱼ)=abs(i−j).
+R: c
+E: Distinta fila: Rᵢ≠Rⱼ. Distinta diagonal: la diferencia de filas no puede ser igual a la diferencia de columnas.
+Fuente: Modelo B, pregunta 8.
+---
+P: In a token game, players must remove 1 or 3 tokens if available, and the player who removes the last token wins. What must a state record for minimax?
+a) Only the number of turns played.
+b) The number of tokens remaining and the player to move.
+c) The number of tokens remaining and the time elapsed, regardless of whose turn it is.
+d) Only the starting player's identifier.
+R: b
+E: Minimax necesita las fichas que quedan y de quién es el turno. Lo anterior no afecta al futuro.
+Fuente: Modelo B, pregunta 9.
+% ======================================================================
+% Problem solving
+% ======================================================================
+---
+T: Problem solving
+P: Using the graph, which path does A* return, and at what cost? Test for a goal when removing a node. Generate successors in alphabetical order and break ties by insertion order. BFS and greedy search mark states when they are inserted. UCS and A* keep the lowest g, allow reopening and ignore outdated entries.
+![Edges (directed):; S→A=6, S→B=2, B→A=1, A→C=2, A→G=9, C→G=3, B→G=14; Heuristic:; h(S)=8, h(A)=1, h(B)=6, h(C)=3, h(G)=0; S = start, G = goal](img/modelo_b_10.png)
+a) S→B→A→C→G, cost 8.
+b) S→A→G, cost 15.
+c) S→B→A→G, cost 12.
+d) S→B→G, cost 16.
+R: a
+E: Saca A (f=7), luego B (f=2+6=8), que mejora A a g=3: A se REABRE con f=4. Después C (g=5, f=8) y G con g=8. Camino S→B→A→C→G, coste 8.
+Fuente: Modelo B, pregunta 10.
+---
+P: The diagram represents X<Y and Y<Z. After running AC-3 to a fixed point, what are the remaining domains?
+![X < Y < Z; X: {1, 2, 3, 4}; Y: {2, 3, 4, 5}; Z: {4}](img/modelo_b_11.png)
+a) X={1,2}, Y={2,3}, Z={4}.
+b) X={1,2,3,4}, Y={2,3,4,5}, Z={4}.
+c) X=∅, Y=∅, Z=∅.
+d) X={1,2}, Y={2,3,4,5}, Z={4}.
+R: a
+E: Z solo puede ser 4, así que Y<4: {2,3}. X<3: {1,2}.
+Fuente: Modelo B, pregunta 11.
+---
+P: Apply alpha–beta pruning from left to right and cut off a branch when β≤α. Which branch does MAX choose, what is its value and how many leaves are pruned?
+![MAX; +-- MIN A: 7 4; +-- MIN B: 2 6; +-- MIN C: 5 9 6](img/modelo_b_12.png)
+a) C, value 5, 1 leaf pruned.
+b) C, value 5, 0 leaves pruned.
+c) C, value 9, 1 leaf pruned.
+d) A, value 5, 1 leaf pruned.
+R: a
+E: MIN A = 4, α=4. MIN B ve 2 ≤ 4 y poda el 6 (1 hoja). MIN C: 5, 9 y 6 → 5, sin poda. MAX elige C con 5.
+Fuente: Modelo B, pregunta 12.
+---
+P: An agent at S can stop for a reward of 3, or advance to T for a reward of 1. From T, the only action ends the episode with a reward of 8 or −2, each with probability 0.5. With V₀=0 and γ=0.5, what is V₂(S) and which action achieves it? Use synchronous updates.
+![From Action To Prob. Reward; S stop Terminal 1 3; S advance T 1 1; T act Terminal 0.5 8; T act Terminal 0.5 -2](img/modelo_b_13.png)
+a) 4, advance.
+b) 6, advance.
+c) 3, advance.
+d) 3, stop.
+R: d
+E: V₁(T) = 0.5·8 + 0.5·(−2) = 3. V₂(S) = max(parar 3, avanzar 1 + 0.5·3 = 2.5) = 3, parar.
+Fuente: Modelo B, pregunta 13.
+---
+P: In single-point crossover, take the first 2 bits from 010101 and the remaining bits from 111000. Then flip only bit 5, counting from 1. What is the final offspring?
+a) 010101.
+b) 011000.
+c) 011010.
+d) 110101.
+R: c
+E: 01 + 1000 = 011000. Se invierte el bit 5 (empezando en 1): 011010.
+Fuente: Modelo B, pregunta 14.
+% ======================================================================
+% Loopover laboratory
+% ======================================================================
+---
+T: Loopover laboratory
+P: Apply 30− to this coupled Loopover board. Rotate the row first and then the column. The + sign means right and down. The − sign means left and up. What is the final content of row 3?
+![0 1 2 3; row 0 00 01 07 03; row 1 05 06 10 04; row 2 08 09 14 11; row 3 12 13 02 15](img/modelo_b_15.png)
+a) [13, 02, 15, 12].
+b) [08, 12, 13, 02].
+c) [12, 13, 02, 15].
+d) [00, 02, 15, 12].
+R: d
+E: Fila 3 a la izquierda: [13, 02, 15, 12]. Columna 0 hacia arriba: era 00, 05, 08, 13 y pasa a 05, 08, 13, 00. La fila 3 empieza ahora por 00.
+Fuente: Modelo B, pregunta 15.
+---
+P: The Loopover action code uses bits 0–1 for the row, bits 2–3 for the column and bit 4 set to 1 for the + sign. Which decimal value encodes 20−?
+a) 2.
+b) 8.
+c) 3.
+d) 18.
+R: a
+E: código = fila + 4·columna + 16 si es +. 20− → 2 + 0 + 0 = 2.
+Fuente: Modelo B, pregunta 16.
+---
+P: Two Loopover pattern databases (PDBs) give 4 and 7. Each database charges the full cost of each action. Which combination guarantees a lower bound without additive cost partitioning?
+a) Twice the maximum, 14.
+b) The sum, 11.
+c) The product, 28.
+d) The maximum, 7.
+R: d
+E: Cada PDB ya es una cota inferior; el máximo también lo es. Sumarlas contaría dos veces la misma acción (no hay reparto de costes).
+Fuente: Modelo B, pregunta 17.
+---
+P: SMA* reaches its memory limit. Under the rule of removing the worst eligible leaf, what should it do if their f-values are 7, 10 and 12?
+a) Remove the node with the fewest descendants even if it is not a leaf.
+b) Remove the leaf with f=12 and back up its information to the parent according to the algorithm.
+c) Delete the whole tree and restart at depth 0.
+d) Remove the leaf with f=7 because it would be explored next.
+R: b
+E: SMA* elimina la peor hoja (mayor f, aquí 12) y guarda su valor en el padre por si hay que volver.
+Fuente: Modelo B, pregunta 18.
+% ======================================================================
+% Individual project
+% ======================================================================
+---
+T: Individual project
+P: Project example. A method solves 12 out of 16 boards and runs out of budget on four. What is its observed solve rate?
+a) 80%.
+b) 25%.
+c) 75%.
+d) 12%.
+R: c
+E: 12/16 = 0.75 = 75 %.
+Fuente: Modelo B, pregunta 19.
+---
+P: The project compares run times and reports only the mean time of successful runs. What additional information makes the comparison easier to interpret?
+a) A value of zero in place of each run that hit the time limit.
+b) The limit and solve rate for both methods, alongside times on comparable cases.
+c) The total run time of the slower method only.
+d) The number of the last instance, even if failures are omitted.
+R: b
+E: La media solo de los éxitos oculta los fallos. Hay que dar el límite, la tasa de resueltos y tiempos sobre casos comparables.
+Fuente: Modelo B, pregunta 20.
